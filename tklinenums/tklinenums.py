@@ -5,28 +5,29 @@ from tkinter.font import Font
 
 
 class TkLineNumbers(Canvas):
-    def __init__(self, master: Misc, editor: Text, font: tuple) -> None:
+    def __init__(self, master: Misc, editor: Text, font: tuple | Font) -> None:
         self.textwidget = editor
         self.master = master
         Canvas.__init__(
             self, master, width=40, highlightthickness=0, borderwidth=2, relief="ridge"
         )
-        self.textwidget.bind(
-            "<<ContentChanged>>", lambda event: self.redraw(), add=True
-        )
-        self.font = Font(family=font[0], size=font[1])
+        if isinstance(font, Font):
+            self.font = font
+        else:
+            self.font = Font(family=font[0], size=font[1])
         self.set_to_ttk_style()
 
     def redraw(self, *args) -> None:
         self.resize()
         self.delete("all")
+        self.unbind_all("Button-1")
         first_line, last_line = int(self.textwidget.index("@0,0").split(".")[0]), int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
         for lineno in range(first_line, last_line + 1):
             if (dlineinfo := self.textwidget.dlineinfo(f"{lineno}.0")) is None:
                 continue
-            self.create_text(
+            num = self.create_text(
                 0,
                 dlineinfo[1] + 2,
                 text=f" {lineno:<4}",
@@ -34,6 +35,12 @@ class TkLineNumbers(Canvas):
                 font=self.font,
                 fill=self.foreground,
             )
+            self.tag_bind(num, "<Button-1>", self.click_see)
+
+    def click_see(self, *args) -> None:
+        self.textwidget.mark_set(
+            "insert", self.textwidget.index(f"@{args[0].x},{args[0].y}")
+        )
 
     def resize(self) -> None:
         end = self.textwidget.index("end").split(".")[0]
@@ -46,7 +53,10 @@ class TkLineNumbers(Canvas):
         self.foreground = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
         self["bg"] = ttk_bg
 
-    def reload(self, font: tuple) -> None:
-        self.font = Font(family=font[0], size=font[1])
+    def reload(self, font: tuple | Font) -> None:
+        if isinstance(font, Font):
+            self.font = font
+        else:
+            self.font = Font(family=font[0], size=font[1])
         self.set_to_ttk_style()
         self.redraw()
