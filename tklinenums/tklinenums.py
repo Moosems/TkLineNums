@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from tkinter import Canvas, Misc, Text
+import platform
+from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
+
+system = str(platform.system())
 
 
 class TkLineNumbers(Canvas):
@@ -16,6 +19,8 @@ class TkLineNumbers(Canvas):
         else:
             self.font = Font(family=font[0], size=font[1])
         self.set_to_ttk_style()
+
+        self.bind("<MouseWheel>", self.mouse_scroll)
 
     def redraw(self, *args) -> None:
         self.resize()
@@ -36,6 +41,14 @@ class TkLineNumbers(Canvas):
                 fill=self.foreground,
             )
             self.tag_bind(num, "<Button-1>", self.click_see)
+
+    def mouse_scroll(self, event: Event) -> None:
+        if system == "Darwin":
+            self.textwidget.yview_scroll(event.delta, "units")
+            self.redraw()
+        else:
+            self.textwidget.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            self.redraw()
 
     def click_see(self, *args) -> None:
         self.textwidget.mark_set(
