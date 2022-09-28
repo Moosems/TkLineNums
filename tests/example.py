@@ -21,7 +21,8 @@ linenums = TkLineNumbers(root, text, font)
 linenums.pack(fill="y", side="left", expand=True)
 linenums.reload(font)
 
-text.bind("<Key>", lambda event: root.after_idle(linenums.redraw))
+textwidget.bind("<Key>", lambda event: root.after_idle(linenums.redraw))
+textwidget.bind("<ButtonRelease-1>", lambda event: root.after_idle(linenums.redraw))
 text["yscrollcommand"] = linenums.redraw
 
 root.mainloop()
