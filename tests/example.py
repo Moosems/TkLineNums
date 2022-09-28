@@ -1,6 +1,12 @@
 from tkinter import Text, Tk
 from tkinter.font import Font
 from tkinter.ttk import Style
+from platform import system
+
+if system() == "Darwin":
+    contmand = "Command"
+else:
+    contmand = "Control"
 
 from tklinenums import TkLineNumbers
 
@@ -21,8 +27,9 @@ linenums = TkLineNumbers(root, text, font)
 linenums.pack(fill="y", side="left", expand=True)
 linenums.reload(font)
 
-text.bind("<Key>", lambda event: root.after_idle(linenums.redraw))
-text.bind("<ButtonRelease-1>", lambda event: root.after_idle(linenums.redraw))
+text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
+text.bind(f"<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
+text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
 text["yscrollcommand"] = linenums.redraw
 
 root.mainloop()
