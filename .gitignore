@@ -2,3 +2,4 @@ info.txt
 .dist/
 dist/
 tklinenums.egg-info/
+tklinenums/__pycache__/

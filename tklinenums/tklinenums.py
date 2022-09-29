@@ -8,9 +8,12 @@ system = str(platform.system())
 
 
 class TkLineNumbers(Canvas):
-    def __init__(self, master: Misc, editor: Text, font: tuple | Font) -> None:
+    def __init__(
+        self, master: Misc, editor: Text, font: tuple | Font, justify: str = "left"
+    ) -> None:
         self.textwidget = editor
         self.master = master
+        self.justify = justify
         Canvas.__init__(
             self, master, width=40, highlightthickness=0, borderwidth=2, relief="ridge"
         )
@@ -33,10 +36,14 @@ class TkLineNumbers(Canvas):
             if (dlineinfo := self.textwidget.dlineinfo(f"{lineno}.0")) is None:
                 continue
             num = self.create_text(
-                0,
-                dlineinfo[1] + 2,
-                text=f" {lineno:<4}",
-                anchor="nw",
+                0
+                if self.justify == "left"
+                else int(self["width"])
+                if self.justify == "right"
+                else int(self["width"]) / 2,
+                dlineinfo[1],
+                text=f" {lineno} " if self.justify != "center" else f"{lineno}",
+                anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
                 font=self.font,
                 fill=self.foreground,
             )
@@ -59,7 +66,7 @@ class TkLineNumbers(Canvas):
         end = self.textwidget.index("end").split(".")[0]
         self.config(width=self.font.measure(" 1234 ")) if int(
             end
-        ) < 1001 else self.config(width=self.font.measure(f" {end} "))
+        ) <= 1000 else self.config(width=self.font.measure(f" {end} "))
 
     def set_to_ttk_style(self) -> None:
         ttk_bg = self.tk.eval("ttk::style lookup TLineNumbers -background")
