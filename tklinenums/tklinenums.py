@@ -144,18 +144,17 @@ class TkLineNumbers(Canvas):
         self.textwidget.mark_set("insert", f"@0,{event.y}")
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add("sel", start, end)
-        """ # Has a few bugs that need to be fixed -- Help wanted
-        first_line, last_line = int(self.textwidget.index("@0,0").split(".")[0]), int(
-            self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
-        )
-        if (end := int(self.textwidget.index(end).split(".")[0])) == last_line:
-            self.textwidget.see(f"{last_line+1}.0")
-        elif (
-            start := int(self.textwidget.index(start).split(".")[0])
-        ) == first_line:  # Scrolling back up doesn't work
-            self.textwidget.see(f"{first_line-1}.0")
-        print(end, last_line, start, first_line)
-        """
+        first_line, last_line = self.textwidget.index("@0,0").split(".")[0], self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
+        if end.split(".")[0] == last_line and event.y > self.winfo_y():
+            self.textwidget.yview_scroll(1, "units") if system == "Darwin" else self.textwidget.yview_scroll((1 / 120), "units")
+            self.textwidget.tag_add("sel", start, str(float(end)+1))
+            self.textwidget.mark_set("insert", str(float(end)+1))
+            return None
+        elif start.split(".")[0] == first_line and event.y < self.winfo_y() + self.winfo_height():
+            self.textwidget.yview_scroll(-1, "units") if system == "Darwin" else self.textwidget.yview_scroll((-1 / 120), "units")
+            self.textwidget.tag_add("sel", str(float(start)-1), end)
+            self.textwidget.mark_set("insert", str(float(start)-1))
+            return None
         self.redraw()
 
 
@@ -217,7 +216,7 @@ if __name__ == "__main__":
     text.pack(side="right")
     text.focus()
 
-    for i in range(50):
+    for i in range(500):
         text.insert("end", f"Line {i+1}\n")
 
     linenums = TkLineNumbers(root, text)

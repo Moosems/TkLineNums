@@ -3,3 +3,4 @@ info.txt
 dist/
 tklinenums.egg-info/
 tklinenums/__pycache__/
+.DS_Store
