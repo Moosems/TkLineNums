@@ -88,14 +88,13 @@ class TkLineNumbers(Canvas):
         """Redraws the widget"""
         self.resize()
         self.delete("all")
-        self.unbind_all("Button-1")
         first_line, last_line = int(self.textwidget.index("@0,0").split(".")[0]), int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
         for lineno in range(first_line, last_line + 1):
             if (dlineinfo := self.textwidget.dlineinfo(f"{lineno}.0")) is None:
                 continue
-            num = self.create_text(
+            self.create_text(
                 0
                 if self.justify == "left"
                 else int(self["width"])
@@ -107,7 +106,6 @@ class TkLineNumbers(Canvas):
                 font=self.font,
                 fill=self.foreground,
             )
-            self.tag_bind(num, "<Button-1>", self.click_see)
 
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
@@ -119,15 +117,22 @@ class TkLineNumbers(Canvas):
 
     def click_see(self, event: Event) -> None:
         """When clicking on a line number it scrolls to that line -- Internal use only"""
-        # Is useless currently for raising lower lines, need to figure out how to get the line number from the click to be centered in the text widget
         # Add shift click
-        # See vscode for example.
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.mark_set(
             "insert",
             f"{self.textwidget.index(f'@{event.x},{event.y}').split('.')[0]}.0",
         )
         self.textwidget.see("insert")
+        first_visible_line, last_visible_line = int(
+            self.textwidget.index("@0,0").split(".")[0]
+        ), int(
+            self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
+        )
+        if (insert := int(self.textwidget.index("insert").split(".")[0])) == first_visible_line:
+            self.textwidget.yview_scroll(-1, "units")
+        elif insert == last_visible_line:
+            self.textwidget.yview_scroll(1, "units")
         self.click_pos = self.textwidget.index("insert")
 
     def unclick(self, event: Event) -> None:
