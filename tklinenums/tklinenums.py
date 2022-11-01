@@ -5,6 +5,10 @@ from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 
 system = str(platform.system())
+if system == "Darwin":
+    scroll_inversion = -1
+else:
+    scroll_inversion = 1
 
 
 class TkLineNumError(Exception):
@@ -108,14 +112,15 @@ class TkLineNumbers(Canvas):
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
         if system == "Darwin":
-            self.textwidget.yview_scroll(-1 * event.delta, "units")
+            self.textwidget.yview_scroll(scroll_inversion * event.delta, "units")
         else:
-            self.textwidget.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            self.textwidget.yview_scroll(int(scroll_inversion * (event.delta / 120)), "units")
         self.redraw()
 
     def click_see(self, event: Event) -> None:
         """When clicking on a line number it scrolls to that line -- Internal use only"""
-        # Is useless currently, need to figure out how to get the line number from the click to be centered in the text widget
+        # Is useless currently for raising lower lines, need to figure out how to get the line number from the click to be centered in the text widget
+        # Add shift click
         # See vscode for example.
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.mark_set(
