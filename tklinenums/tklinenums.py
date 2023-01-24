@@ -4,11 +4,11 @@ import platform
 from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 
-system = str(platform.system())
+system: str = str(platform.system())
 if system == "Darwin":
-    scroll_inversion = -1
+    scroll_inversion: int = -1
 else:
-    scroll_inversion = 1
+    scroll_inversion: int = 1
 
 
 class TkLineNumError(Exception):
@@ -56,24 +56,7 @@ class TkLineNumbers(Canvas):
             *args,
             **kwargs,
         )
-        if isinstance(font, Font):
-            self.font = font
-        elif isinstance(font, tuple):
-            self.font = Font(family=font[0], size=font[1])
-        elif isinstance(font, str):
-            self.font = Font(name=font, exists=True)
-        else:
-            self.font = Font(
-                family=" ".join(
-                    (
-                        font := self.textwidget["font"]
-                        .replace("{", "")
-                        .replace("}", "")
-                        .split(" ")
-                    )[:-1]
-                ),
-                size=font[-1],
-            )
+        self.set_font(font)
         self.set_to_ttk_style()
 
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
@@ -82,7 +65,7 @@ class TkLineNumbers(Canvas):
         self.bind("<Double-Button-1>", self.double_click, add=True)
         self.bind("<Button1-Motion>", self.drag, add=True)
 
-        self.click_pos = None
+        self.click_pos: None = None
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
@@ -137,7 +120,7 @@ class TkLineNumbers(Canvas):
 
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
-        self.click_pos = None
+        self.click_pos: None = None
 
     def double_click(self, event: Event) -> None:
         """Selects the line when double clicked -- Internal use only"""
@@ -182,14 +165,20 @@ class TkLineNumbers(Canvas):
 
     def reload(self, font: tuple | Font | str = "TkFixedFont") -> None:
         """Reloads the widget with a new font"""
+        self.set_font(font)
+        self.set_to_ttk_style()
+        self.redraw()
+
+    def set_font(self, font: tuple | Font | str | None) -> None:
+        """Sets the font of the widget"""
         if isinstance(font, Font):
-            self.font = font
+            self.font: Font = font
         elif isinstance(font, tuple):
-            self.font = Font(family=font[0], size=font[1])
+            self.font: Font = Font(family=font[0], size=font[1])
         elif isinstance(font, str):
-            self.font = Font(name=font, exists=True)
+            self.font: Font = Font(name=font, exists=True)
         else:
-            self.font = Font(
+            self.font: Font = Font(
                 family=" ".join(
                     (
                         font := self.textwidget["font"]
@@ -200,8 +189,6 @@ class TkLineNumbers(Canvas):
                 ),
                 size=font[-1],
             )
-        self.set_to_ttk_style()
-        self.redraw()
 
 
 if __name__ == "__main__":
