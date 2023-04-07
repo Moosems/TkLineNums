@@ -136,6 +136,17 @@ class TkLineNumbers(Canvas):
 
     def drag(self, event: Event) -> None:
         """When click dragging it selects the text -- Internal use only"""
+
+        """
+        Issues:
+         - Once it starts going it's hard to stop drag clicking (because most people pull back up when done but this is still
+           considered dragging and it remembers the direction meaning it will continue to drag in that direction)
+         - When you reach your end point for scroll clicking you can't go back unless you go completely the opposite way which 
+           then means you can't go back the original way
+         - When you go down and then try to go back up you can't
+         - Must continue to drag cursor for it to select more even if cursor is off-screen or trying to slowly select more (Means
+           it might need to become recursive)
+        """ #TODO: Fix issues
         if self.click_pos is None:
             return
         start, end = self.textwidget.index("insert"), self.click_pos

@@ -7,6 +7,8 @@ TkLineNums is a simple line numbering widget for Tkinter. It supports ttk themes
 ## Features
 
 * Clicking on line numbers will set the insert to the beginning of the line.
+* Shift clicking will select all text from the end of the line clicked by cursor and the insert position.
+* Awful click-drag scrolling (Needs help)
 * Scrolling the linebar will scroll the text widget
 * Supports ttk themes
 * Supports left, right, and center alignment with the `justify` option
