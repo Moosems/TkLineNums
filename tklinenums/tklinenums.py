@@ -101,8 +101,10 @@ class TkLineNumbers(Canvas):
         self.redraw()
 
     def click_see(self, event: Event) -> None:
-        """When clicking on a line number it scrolls to that line -- Internal use only"""
-        # Add shift click
+        """When clicking on a line number it scrolls to that line if not shifting -- Internal use only"""
+        if event.state == 1:
+            self.shift_click(event)
+            return
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.mark_set(
             "insert",
@@ -167,6 +169,15 @@ class TkLineNumbers(Canvas):
             self.textwidget.mark_set("insert", str(float(start) - 1))
             return None
         self.redraw()
+
+    def shift_click(self, event: Event) -> None:
+        start_pos, end_pos = self.textwidget.index("insert"), self.textwidget.index(
+            f"@0,{event.y}"
+        )
+        self.textwidget.tag_remove("sel", "1.0", "end")
+        if self.textwidget.compare(start_pos, ">", end_pos):
+            start_pos, end_pos = end_pos, start_pos
+        self.textwidget.tag_add("sel", start_pos, end_pos)
 
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
