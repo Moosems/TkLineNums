@@ -95,7 +95,9 @@ class TkLineNumbers(Canvas):
         if system == "Darwin":
             self.textwidget.yview_scroll(scroll_inversion * event.delta, "units")
         else:
-            self.textwidget.yview_scroll(int(scroll_inversion * (event.delta / 120)), "units")
+            self.textwidget.yview_scroll(
+                int(scroll_inversion * (event.delta / 120)), "units"
+            )
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -112,7 +114,9 @@ class TkLineNumbers(Canvas):
         ), int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
-        if (insert := int(self.textwidget.index("insert").split(".")[0])) == first_visible_line:
+        if (
+            insert := int(self.textwidget.index("insert").split(".")[0])
+        ) == first_visible_line:
             self.textwidget.yview_scroll(-1, "units")
         elif insert == last_visible_line:
             self.textwidget.yview_scroll(1, "units")
@@ -137,19 +141,32 @@ class TkLineNumbers(Canvas):
         self.textwidget.mark_set("insert", f"@0,{event.y}")
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add("sel", start, end)
-        first_line, last_line = self.textwidget.index("@0,0").split(".")[0], self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
+        first_line, last_line = (
+            self.textwidget.index("@0,0").split(".")[0],
+            self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0],
+        )
         if end.split(".")[0] == last_line and event.y > self.winfo_y():
-            self.textwidget.yview_scroll(1, "units") if system == "Darwin" else self.textwidget.yview_scroll((1 / 120), "units")
-            self.textwidget.tag_add("sel", start, str(float(end)+1))
-            self.textwidget.mark_set("insert", str(float(end)+1))
+            self.textwidget.yview_scroll(
+                1, "units"
+            ) if system == "Darwin" else self.textwidget.yview_scroll(
+                (1 / 120), "units"
+            )
+            self.textwidget.tag_add("sel", start, str(float(end) + 1))
+            self.textwidget.mark_set("insert", str(float(end) + 1))
             return None
-        elif start.split(".")[0] == first_line and event.y < self.winfo_y() + self.winfo_height():
-            self.textwidget.yview_scroll(-1, "units") if system == "Darwin" else self.textwidget.yview_scroll((-1 / 120), "units")
-            self.textwidget.tag_add("sel", str(float(start)-1), end)
-            self.textwidget.mark_set("insert", str(float(start)-1))
+        elif (
+            start.split(".")[0] == first_line
+            and event.y < self.winfo_y() + self.winfo_height()
+        ):
+            self.textwidget.yview_scroll(
+                -1, "units"
+            ) if system == "Darwin" else self.textwidget.yview_scroll(
+                (-1 / 120), "units"
+            )
+            self.textwidget.tag_add("sel", str(float(start) - 1), end)
+            self.textwidget.mark_set("insert", str(float(start) - 1))
             return None
         self.redraw()
-
 
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
@@ -192,8 +209,8 @@ class TkLineNumbers(Canvas):
 
 
 if __name__ == "__main__":
-    from tkinter import Text, Tk
     import platform
+    from tkinter import Text, Tk
     from tkinter.font import Font
     from tkinter.ttk import Style
 

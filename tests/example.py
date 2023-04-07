@@ -1,7 +1,7 @@
+from platform import system
 from tkinter import Text, Tk
 from tkinter.font import Font
 from tkinter.ttk import Style
-from platform import system
 
 if system() == "Darwin":
     contmand: str = "Command"
