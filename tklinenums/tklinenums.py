@@ -1,3 +1,4 @@
+"""TkLineNumbers - A line number widget for tkinter Text widgets"""
 from __future__ import annotations
 
 import platform
@@ -171,6 +172,7 @@ class TkLineNumbers(Canvas):
         self.redraw()
 
     def shift_click(self, event: Event) -> None:
+        """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
         start_pos, end_pos = self.textwidget.index("insert"), self.textwidget.index(
             f"@0,{event.y}"
         )
