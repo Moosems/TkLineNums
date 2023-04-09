@@ -216,7 +216,7 @@ class TkLineNumbers(Canvas):
             self.font: Font = font
         elif isinstance(font, tuple):
             self.font: Font = Font(family=font[0], size=font[1])
-        elif isinstance(font, str):
+        elif isinstance(font, str) and not font.startswith("{"):
             self.font: Font = Font(name=font, exists=True)
         else:
             self.font: Font = Font(
