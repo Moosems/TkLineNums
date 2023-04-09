@@ -34,7 +34,6 @@ class TkLineNumbers(Canvas):
         self,
         master: Misc,
         editor: Text,
-        font: tuple | Font | str | None = None,
         justify: str = "left",
         *args,
         **kwargs,
@@ -57,7 +56,6 @@ class TkLineNumbers(Canvas):
             *args,
             **kwargs,
         )
-        self.set_font(font)
         self.set_to_ttk_style()
 
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
@@ -87,7 +85,7 @@ class TkLineNumbers(Canvas):
                 dlineinfo[1],
                 text=f" {lineno} " if self.justify != "center" else f"{lineno}",
                 anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
-                font=self.font,
+                font=self.textwidget.cget("font"),
                 fill=self.foreground,
             )
 
@@ -146,7 +144,7 @@ class TkLineNumbers(Canvas):
          - When you go down and then try to go back up you can't
          - Must continue to drag cursor for it to select more even if cursor is off-screen or trying to slowly select more (Means
            it might need to become recursive)
-        """ #TODO: Fix issues
+        """  # TODO: Fix issues
         if self.click_pos is None:
             return
         start, end = self.textwidget.index("insert"), self.click_pos
@@ -195,41 +193,21 @@ class TkLineNumbers(Canvas):
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
         end = self.textwidget.index("end").split(".")[0]
-        self.config(width=self.font.measure(" 1234 ")) if int(
-            end
-        ) <= 1000 else self.config(width=self.font.measure(f" {end} "))
+        self.config(
+            width=Font(font=(temp_font := self.textwidget.cget("font"))).measure(
+                " 1234 "
+            )
+        ) if int(end) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
     def set_to_ttk_style(self) -> None:
         """Sets the widget to the ttk style"""
         self["bg"] = self.tk.eval("ttk::style lookup TLineNumbers -background")
         self.foreground = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
 
-    def reload(self, font: tuple | Font | str = "TkFixedFont") -> None:
-        """Reloads the widget with a new font"""
-        self.set_font(font)
+    def reload(self) -> None:
+        """Reloads the widget"""
         self.set_to_ttk_style()
         self.redraw()
-
-    def set_font(self, font: tuple | Font | str | None) -> None:
-        """Sets the font of the widget"""
-        if isinstance(font, Font):
-            self.font: Font = font
-        elif isinstance(font, tuple):
-            self.font: Font = Font(family=font[0], size=font[1])
-        elif isinstance(font, str) and not font.startswith("{"):
-            self.font: Font = Font(name=font, exists=True)
-        else:
-            self.font: Font = Font(
-                family=" ".join(
-                    (
-                        font := self.textwidget["font"]
-                        .replace("{", "")
-                        .replace("}", "")
-                        .split(" ")
-                    )[:-1]
-                ),
-                size=font[-1],
-            )
 
 
 if __name__ == "__main__":
@@ -266,5 +244,6 @@ if __name__ == "__main__":
         f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True
     )
     text["yscrollcommand"] = linenums.redraw
+    text.config(font=("Courier New bold", 13))
 
     root.mainloop()
