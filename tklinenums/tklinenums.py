@@ -65,6 +65,7 @@ class TkLineNumbers(Canvas):
         self.bind("<Button1-Motion>", self.drag, add=True)
 
         self.click_pos: None = None
+        self.dragging: bool = False
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
@@ -97,6 +98,7 @@ class TkLineNumbers(Canvas):
             self.textwidget.yview_scroll(
                 int(scroll_inversion * (event.delta / 120)), "units"
             )
+        #TODO: Check if the mouse is down and if so, add sel from the click position to the current position
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -126,6 +128,7 @@ class TkLineNumbers(Canvas):
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
         self.click_pos: None = None
+        self.dragging: bool = False
 
     def double_click(self, event: Event) -> None:
         """Selects the line when double clicked -- Internal use only"""
@@ -144,7 +147,10 @@ class TkLineNumbers(Canvas):
          - When you go down and then try to go back up you can't
          - Must continue to drag cursor for it to select more even if cursor is off-screen or trying to slowly select more (Means
            it might need to become recursive)
+         - If you click, hold down the mouse without moving it, and scroll with the mouse wheel it will lag with adding the sel 
+           tag when scrolling to the bottom but works fine when scrolling to the top
         """  # TODO: Fix issues
+        self.dragging: bool = True
         if self.click_pos is None:
             return
         start, end = self.textwidget.index("insert"), self.click_pos
