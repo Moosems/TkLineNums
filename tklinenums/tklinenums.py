@@ -49,9 +49,7 @@ class TkLineNumbers(Canvas):
             highlightthickness=0
             if kwargs.get("highlightthickness") is None
             else kwargs.get("highlightthickness"),
-            borderwidth=2
-            if kwargs.get("borderwidth") is None
-            else kwargs.get("borderwidth"),
+            borderwidth=2 if kwargs.get("borderwidth") is None else kwargs.get("borderwidth"),
             relief="ridge" if kwargs.get("relief") is None else kwargs.get("relief"),
             *args,
             **kwargs,
@@ -95,10 +93,8 @@ class TkLineNumbers(Canvas):
         if system == "Darwin":
             self.textwidget.yview_scroll(scroll_inversion * event.delta, "units")
         else:
-            self.textwidget.yview_scroll(
-                int(scroll_inversion * (event.delta / 120)), "units"
-            )
-        #TODO: Check if the mouse is down and if so, add sel from the click position to the current position
+            self.textwidget.yview_scroll(int(scroll_inversion * (event.delta / 120)), "units")
+        # TODO: Check if the mouse is down and if so, add sel from the click position to the current position
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -112,14 +108,10 @@ class TkLineNumbers(Canvas):
             f"{self.textwidget.index(f'@{event.x},{event.y}').split('.')[0]}.0",
         )
         self.textwidget.see("insert")
-        first_visible_line, last_visible_line = int(
-            self.textwidget.index("@0,0").split(".")[0]
-        ), int(
+        first_visible_line, last_visible_line = int(self.textwidget.index("@0,0").split(".")[0]), int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
-        if (
-            insert := int(self.textwidget.index("insert").split(".")[0])
-        ) == first_visible_line:
+        if (insert := int(self.textwidget.index("insert").split(".")[0])) == first_visible_line:
             self.textwidget.yview_scroll(-1, "units")
         elif insert == last_visible_line:
             self.textwidget.yview_scroll(1, "units")
@@ -164,21 +156,14 @@ class TkLineNumbers(Canvas):
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0],
         )
         if end.split(".")[0] == last_line and event.y > self.winfo_y():
-            self.textwidget.yview_scroll(
-                1, "units"
-            ) if system == "Darwin" else self.textwidget.yview_scroll(
+            self.textwidget.yview_scroll(1, "units") if system == "Darwin" else self.textwidget.yview_scroll(
                 (1 / 120), "units"
             )
             self.textwidget.tag_add("sel", start, str(float(end) + 1))
             self.textwidget.mark_set("insert", str(float(end) + 1))
             return None
-        elif (
-            start.split(".")[0] == first_line
-            and event.y < self.winfo_y() + self.winfo_height()
-        ):
-            self.textwidget.yview_scroll(
-                -1, "units"
-            ) if system == "Darwin" else self.textwidget.yview_scroll(
+        elif start.split(".")[0] == first_line and event.y < self.winfo_y() + self.winfo_height():
+            self.textwidget.yview_scroll(-1, "units") if system == "Darwin" else self.textwidget.yview_scroll(
                 (-1 / 120), "units"
             )
             self.textwidget.tag_add("sel", str(float(start) - 1), end)
@@ -188,9 +173,7 @@ class TkLineNumbers(Canvas):
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
-        start_pos, end_pos = self.textwidget.index("insert"), self.textwidget.index(
-            f"@0,{event.y}"
-        )
+        start_pos, end_pos = self.textwidget.index("insert"), self.textwidget.index(f"@0,{event.y}")
         self.textwidget.tag_remove("sel", "1.0", "end")
         if self.textwidget.compare(start_pos, ">", end_pos):
             start_pos, end_pos = end_pos, start_pos
@@ -199,11 +182,9 @@ class TkLineNumbers(Canvas):
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
         end = self.textwidget.index("end").split(".")[0]
-        self.config(
-            width=Font(font=(temp_font := self.textwidget.cget("font"))).measure(
-                " 1234 "
-            )
-        ) if int(end) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
+        self.config(width=Font(font=(temp_font := self.textwidget.cget("font"))).measure(" 1234 ")) if int(
+            end
+        ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
     def set_to_ttk_style(self) -> None:
         """Sets the widget to the ttk style"""
@@ -246,9 +227,7 @@ if __name__ == "__main__":
 
     text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
     text.bind(f"<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
-    text.bind(
-        f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True
-    )
+    text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
     text["yscrollcommand"] = linenums.redraw
     text.config(font=("Courier New bold", 13))
 
