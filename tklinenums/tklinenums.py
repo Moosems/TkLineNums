@@ -6,7 +6,7 @@ from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 
 system: str = str(platform.system())
-if system == "Darwin":
+if system in ("Darwin" or "Windows"):
     scroll_inversion = lambda delta: -delta
 else:
     scroll_inversion = lambda delta: (delta / 120)
