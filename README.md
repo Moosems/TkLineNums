@@ -1,4 +1,4 @@
-# TkLineNums V.1.6.2
+# TkLineNums V.1.6.3
 
 TkLineNums is a simple line numbering widget for Tkinter. It supports ttk themes through the set_to_ttk_style method.
 

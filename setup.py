@@ -5,7 +5,7 @@ with open("README.md", "r") as file:
 
 setup(
     name="tklinenums",
-    version="1.6.2",
+    version="1.6.3",
     description="A simple Tkinter widget for displaying line numbers",
     long_description=long_description,
     long_description_content_type="text/markdown",
