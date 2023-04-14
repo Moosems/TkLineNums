@@ -1,16 +1,10 @@
 """TkLineNumbers - A line number widget for tkinter Text widgets"""
 from __future__ import annotations
 
-import platform
 from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 
-system: str = str(platform.system())
-if system == "Darwin":
-    scroll_inversion: int = -1
-else:
-    scroll_inversion: int = 1
-
+scroll_inversion: int = -1
 
 class TkLineNumError(Exception):
     ...
