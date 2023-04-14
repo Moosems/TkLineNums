@@ -55,6 +55,9 @@ class TkLineNumbers(Canvas):
         self.set_to_ttk_style()
 
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
+        # If I'm mouse scrolling and I am clicking on line numbers, it should select the lines from where I clicked to where I am scrolling
+        # TODO: Make it so that it selects the lines from where I clicked to where I am scrolling
+        # Not a feauture in VS Code
         self.bind("<Button-1>", self.click_see, add=True)
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
         self.bind("<Double-Button-1>", self.double_click, add=True)
@@ -92,7 +95,6 @@ class TkLineNumbers(Canvas):
             self.textwidget.yview_scroll(scroll_inversion * event.delta, "units")
         else:
             self.textwidget.yview_scroll(int(scroll_inversion * (event.delta / 120)), "units")
-        # TODO: Check if the mouse is down and if so, add sel from the click position to the current position
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -122,7 +124,7 @@ class TkLineNumbers(Canvas):
     def double_click(self, event: Event) -> None:
         """Selects the line when double clicked -- Internal use only"""
         self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", "insert", "insert + 1 line")        
+        self.textwidget.tag_add("sel", "insert", "insert + 1 line")
 
     def auto_scroll(self, event: Event) -> None:
         """Automatically scrolls the text widget when the mouse is near the top or bottom, similar to the drag function -- Internal use only"""
@@ -150,12 +152,18 @@ class TkLineNumbers(Canvas):
 
     def drag(self, event: Event) -> None:
         """When click dragging it selects the text -- Internal use only"""
-        if self.click_pos is None or event.x < 0 or event.x >= self.winfo_width() or event.y < 0 or event.y >= self.winfo_height():
+        if (
+            self.click_pos is None
+            or event.x < 0
+            or event.x >= self.winfo_width()
+            or event.y < 0
+            or event.y >= self.winfo_height()
+        ):
             return
         start, end = self.textwidget.index("insert"), self.click_pos
         if self.textwidget.compare("insert", ">", self.click_pos):
-            start, end = start.split(".")[0] + ".0", str(float(end) + 1).split(".")[0] + ".0"
-        
+            start, end = start, str(float(end) + 1)
+
         if self.textwidget.compare(start, ">", end):
             start, end = end, start
         self.textwidget.tag_remove("sel", "1.0", "end")
@@ -169,7 +177,6 @@ class TkLineNumbers(Canvas):
            considered dragging and it remembers the direction meaning it will continue to drag in that direction)unless you unclick
          - Once it goes past the end of the text widget it will continue to drag in that direction until unclicked
         """  # TODO: Fix issues
-            
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
