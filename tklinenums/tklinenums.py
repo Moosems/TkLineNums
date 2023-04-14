@@ -9,7 +9,7 @@ system: str = str(platform.system())
 if system in ("Darwin" or "Windows"):
     scroll_inversion = lambda delta: -delta
 else:
-    scroll_inversion = lambda delta: (delta / 120)
+    scroll_inversion = lambda delta: int(delta / 120)
 
 
 class TkLineNumError(Exception):
