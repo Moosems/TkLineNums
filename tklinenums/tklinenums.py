@@ -45,12 +45,10 @@ class TkLineNumbers(Canvas):
         Canvas.__init__(
             self,
             master,
-            width=40 if kwargs.get("width") is None else kwargs.get("width"),
-            highlightthickness=0
-            if kwargs.get("highlightthickness") is None
-            else kwargs.get("highlightthickness"),
-            borderwidth=2 if kwargs.get("borderwidth") is None else kwargs.get("borderwidth"),
-            relief="ridge" if kwargs.get("relief") is None else kwargs.get("relief"),
+            width=kwargs.get("width", 40),
+            highlightthickness=kwargs.get("highlightthickness", 0),
+            borderwidth=kwargs.get("borderwidth", 2),
+            relief=kwargs.get("relief", "ridge"),
             *args,
             **kwargs,
         )
@@ -61,9 +59,9 @@ class TkLineNumbers(Canvas):
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
         self.bind("<Double-Button-1>", self.double_click, add=True)
         self.bind("<Button1-Motion>", self.drag, add=True)
+        self.bind("<Button1-Leave>", self.auto_scroll, add=True)
 
         self.click_pos: None = None
-        self.dragging: bool = False
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
@@ -120,56 +118,58 @@ class TkLineNumbers(Canvas):
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
         self.click_pos: None = None
-        self.dragging: bool = False
 
     def double_click(self, event: Event) -> None:
         """Selects the line when double clicked -- Internal use only"""
         self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", "insert", "insert + 1 line")
+        self.textwidget.tag_add("sel", "insert", "insert + 1 line")        
+
+    def auto_scroll(self, event: Event) -> None:
+        """Automatically scrolls the text widget when the mouse is near the top or bottom, similar to the drag function -- Internal use only"""
+        if self.click_pos is None:
+            return
+        if event.y >= self.winfo_height():
+            self.textwidget.yview_scroll(1 if system == "Darwin" else (1 / 120), "units")
+        elif event.y < 0:
+            self.textwidget.yview_scroll(-1 if system == "Darwin" else (-1 / 120), "units")
+        elif event.x >= self.winfo_width():
+            self.textwidget.xview_scroll(2 if system == "Darwin" else (2 / 120), "units")
+        elif event.x < 0:
+            self.textwidget.xview_scroll(-2 if system == "Darwin" else (-2 / 120), "units")
+        else:
+            return
+        start, end = self.textwidget.index("insert"), self.click_pos
+        if self.textwidget.compare("insert", ">", self.click_pos):
+            start, end = end, str(float(start) + 1)
+        else:
+            end = str(float(end) + 1)
+        self.textwidget.tag_remove("sel", "1.0", "end")
+        self.textwidget.tag_add("sel", start, end)
+        self.textwidget.mark_set("insert", f"@{event.x},{event.y}")
+        self.after(50, self.auto_scroll, event)
 
     def drag(self, event: Event) -> None:
         """When click dragging it selects the text -- Internal use only"""
+        if self.click_pos is None or event.x < 0 or event.x >= self.winfo_width() or event.y < 0 or event.y >= self.winfo_height():
+            return
+        start, end = self.textwidget.index("insert"), self.click_pos
+        if self.textwidget.compare("insert", ">", self.click_pos):
+            start, end = start.split(".")[0] + ".0", str(float(end) + 1).split(".")[0] + ".0"
+        
+        if self.textwidget.compare(start, ">", end):
+            start, end = end, start
+        self.textwidget.tag_remove("sel", "1.0", "end")
+        self.textwidget.tag_add("sel", start, end)
+        self.textwidget.mark_set("insert", self.textwidget.index(f"@{event.x},{event.y} linestart"))
+        self.redraw()
 
         """
         Issues:
          - Once it starts going it's hard to stop drag clicking (because most people pull back up when done but this is still
-           considered dragging and it remembers the direction meaning it will continue to drag in that direction)
-         - When you reach your end point for scroll clicking you can't go back unless you go completely the opposite way which 
-           then means you can't go back the original way
-         - When you go down and then try to go back up you can't
-         - Must continue to drag cursor for it to select more even if cursor is off-screen or trying to slowly select more (Means
-           it might need to become recursive)
-         - If you click, hold down the mouse without moving it, and scroll with the mouse wheel it will lag with adding the sel 
-           tag when scrolling to the bottom but works fine when scrolling to the top
+           considered dragging and it remembers the direction meaning it will continue to drag in that direction)unless you unclick
+         - Once it goes past the end of the text widget it will continue to drag in that direction until unclicked
         """  # TODO: Fix issues
-        self.dragging: bool = True
-        if self.click_pos is None:
-            return
-        start, end = self.textwidget.index("insert"), self.click_pos
-        if self.textwidget.compare("insert", ">", self.click_pos):
-            start, end = end, start
-        self.textwidget.mark_set("insert", f"@0,{event.y}")
-        self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", start, end)
-        first_line, last_line = (
-            self.textwidget.index("@0,0").split(".")[0],
-            self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0],
-        )
-        if end.split(".")[0] == last_line and event.y > self.winfo_y():
-            self.textwidget.yview_scroll(1, "units") if system == "Darwin" else self.textwidget.yview_scroll(
-                (1 / 120), "units"
-            )
-            self.textwidget.tag_add("sel", start, str(float(end) + 1))
-            self.textwidget.mark_set("insert", str(float(end) + 1))
-            return None
-        elif start.split(".")[0] == first_line and event.y < self.winfo_y() + self.winfo_height():
-            self.textwidget.yview_scroll(-1, "units") if system == "Darwin" else self.textwidget.yview_scroll(
-                (-1 / 120), "units"
-            )
-            self.textwidget.tag_add("sel", str(float(start) - 1), end)
-            self.textwidget.mark_set("insert", str(float(start) - 1))
-            return None
-        self.redraw()
+            
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
