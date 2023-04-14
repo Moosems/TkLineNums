@@ -5,12 +5,11 @@ import platform
 from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 
-
 system: str = str(platform.system())
-if system == "Darwin" or "Windows":
-    scroll_inversion: int = -1
+if system in ("Darwin", "Windows"):
+    scroll_inversion = -1
 else:
-	scroll_inversion: int = 1
+    scroll_inversion = 1
 
 class TkLineNumError(Exception):
     ...
