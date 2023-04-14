@@ -7,9 +7,9 @@ from tkinter.font import Font
 
 system: str = str(platform.system())
 if system == "Darwin":
-    scroll_inversion: int = -1
+    scroll_inversion = lambda delta: -delta
 else:
-    scroll_inversion: int = 1
+    scroll_inversion = lambda delta: (delta / 120)
 
 
 class TkLineNumError(Exception):
@@ -94,9 +94,9 @@ class TkLineNumbers(Canvas):
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
         if system == "Darwin":
-            self.textwidget.yview_scroll(scroll_inversion * event.delta, "units")
+            self.textwidget.yview_scroll(scroll_inversion(event.delta), "units")
         else:
-            self.textwidget.yview_scroll(int(scroll_inversion * (event.delta / 120)), "units")
+            self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
         self.redraw()
 
     def click_see(self, event: Event) -> None:
