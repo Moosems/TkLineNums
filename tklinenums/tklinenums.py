@@ -1,10 +1,16 @@
 """TkLineNumbers - A line number widget for tkinter Text widgets"""
 from __future__ import annotations
 
+import platform
 from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 
-scroll_inversion: int = -1
+
+system: str = str(platform.system())
+if system == "Darwin" or "Windows":
+    scroll_inversion: int = -1
+else:
+	scroll_inversion: int = 1
 
 class TkLineNumError(Exception):
     ...
@@ -39,21 +45,19 @@ class TkLineNumbers(Canvas):
         Canvas.__init__(
             self,
             master,
-            width=kwargs.pop("width", 40),
-            highlightthickness=kwargs.pop("highlightthickness", 0),
-            borderwidth=kwargs.pop("borderwidth", 2),
-            relief=kwargs.pop("relief", "ridge"),
+            width=kwargs.get("width", 40),
+            highlightthickness=kwargs.get("highlightthickness", 0),
+            borderwidth=kwargs.get("borderwidth", 2),
+            relief=kwargs.get("relief", "ridge"),
             *args,
             **kwargs,
         )
         self.set_to_ttk_style()
 
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
-        #If I'm mouse scrolling and I am clicking on line numbers, it should select the lines from where I clicked to where I am scrolling
-        #TODO: Make it so that it selects the lines from where I clicked to where I am scrolling
-        #Not a feauture in VS Code
-        #BUG: If I click and start dragging, drag into the text, and then back into the linenumbers it has a weird behavior
-        #This is the same buggy behavior that happens when you try to change drag direction
+        # If I'm mouse scrolling and I am clicking on line numbers, it should select the lines from where I clicked to where I am scrolling
+        # TODO: Make it so that it selects the lines from where I clicked to where I am scrolling
+        # Not a feauture in VS Code
         self.bind("<Button-1>", self.click_see, add=True)
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
         self.bind("<Double-Button-1>", self.double_click, add=True)
@@ -158,13 +162,13 @@ class TkLineNumbers(Canvas):
             return
         start, end = self.textwidget.index("insert"), self.click_pos
         if self.textwidget.compare("insert", ">", self.click_pos):
-            start, end = end, str(float(start) + 1)
-        else:
-            end = str(float(end) + 1)
+            start, end = start, str(float(end) + 1)
 
+        if self.textwidget.compare(start, ">", end):
+            start, end = end, start
         self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0")
-        self.textwidget.mark_set("insert", self.textwidget.index(f"@{event.x},{event.y} linestart + 1 line"))
+        self.textwidget.tag_add("sel", start, end)
+        self.textwidget.mark_set("insert", self.textwidget.index(f"@{event.x},{event.y} linestart"))
         self.redraw()
 
         """
@@ -173,7 +177,6 @@ class TkLineNumbers(Canvas):
            considered dragging and it remembers the direction meaning it will continue to drag in that direction)unless you unclick
          - Once it goes past the end of the text widget it will continue to drag in that direction until unclicked
         """  # TODO: Fix issues
-
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
