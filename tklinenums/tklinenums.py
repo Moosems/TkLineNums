@@ -58,15 +58,15 @@ class TkLineNumbers(Canvas):
         #If I'm mouse scrolling and I am clicking on line numbers, it should select the lines from where I clicked to where I am scrolling
         #TODO: Make it so that it selects the lines from where I clicked to where I am scrolling
         #Not a feauture in VS Code
-        #BUG: If I click and start dragging, drag into the text, and then back into the linenumbers it has a weird behavior
-        #This is the same buggy behavior that happens when you try to change drag direction
         self.bind("<Button-1>", self.click_see, add=True)
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
         self.bind("<Double-Button-1>", self.double_click, add=True)
         self.bind("<Button1-Motion>", self.drag, add=True)
         self.bind("<Button1-Leave>", self.auto_scroll, add=True)
+        self.bind("<Button1-Enter>", self.stop_auto_scroll, add=True)
 
         self.click_pos: None = None
+        self.cancellable_after: None = None
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
@@ -150,7 +150,13 @@ class TkLineNumbers(Canvas):
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add("sel", start, end)
         self.textwidget.mark_set("insert", f"@{event.x},{event.y}")
-        self.after(50, self.auto_scroll, event)
+        self.cancellable_after = self.after(50, self.auto_scroll, event)
+
+    def stop_auto_scroll(self, event: Event) -> None:
+        """Stops the auto scroll -- Internal use only"""
+        if self.cancellable_after is not None:
+            self.after_cancel(self.cancellable_after)
+            self.cancellable_after: None = None
 
     def drag(self, event: Event) -> None:
         """When click dragging it selects the text -- Internal use only"""
@@ -175,9 +181,8 @@ class TkLineNumbers(Canvas):
 
         """
         Issues:
-         - Once it starts going it's hard to stop drag clicking (because most people pull back up when done but this is still
-           considered dragging and it remembers the direction meaning it will continue to drag in that direction)unless you unclick
-         - Once it goes past the end of the text widget it will continue to drag in that direction until unclicked
+         - Erratic behavior causes it to pause and requires reentering the text widget
+         - If I click and start dragging, drag into the text, and then back into the linenumbers it has a weird behavior
         """  # TODO: Fix issues
 
 
