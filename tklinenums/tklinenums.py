@@ -1,13 +1,12 @@
 """TkLineNumbers - A line number widget for tkinter Text widgets"""
 from __future__ import annotations
 
-import platform
+from platform import system
 from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 from typing import Callable
 
-system: str = str(platform.system())
-if system in ("Darwin" or "Windows"):
+if system() in ("Darwin" or "Windows"):
     scroll_inversion: Callable[[int], int] = lambda delta: -delta
 else:
     scroll_inversion: Callable[[int], int] = lambda delta: int(delta / 120)
@@ -65,13 +64,14 @@ class TkLineNumbers(Canvas):
         self.bind("<Button1-Leave>", self.auto_scroll, add=True)
         self.bind("<Button1-Enter>", self.stop_auto_scroll, add=True)
 
-        self.click_pos: None | str = None
+        self.click_pos: str | None = None
         self.cancellable_after: Callable | None = None
 
         self.reload()
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
+        del args
         self.resize()
         self.delete("all")
 
@@ -96,10 +96,7 @@ class TkLineNumbers(Canvas):
 
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
-        if system == "Darwin":
-            self.textwidget.yview_scroll(scroll_inversion(event.delta), "units")
-        else:
-            self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
+        self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -113,11 +110,9 @@ class TkLineNumbers(Canvas):
             f"{self.textwidget.index(f'@{event.x},{event.y}').split('.')[0]}.0",
         )
         self.textwidget.see("insert")
-        first_visible_line: int = int(self.textwidget.index("@0,0").split(".")[0])
-        last_visible_line: int = int(
-            self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
-        )
-        insert: int = int(self.textwidget.index("insert").split(".")[0])
+        first_visible_line = int(self.textwidget.index("@0,0").split(".")[0])
+        last_visible_line = int(self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0])
+        insert = int(self.textwidget.index("insert").split(".")[0])
         if insert == first_visible_line:
             self.textwidget.yview_scroll(scroll_inversion(-1), "units")
         elif insert == last_visible_line:
@@ -127,7 +122,7 @@ class TkLineNumbers(Canvas):
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
         del event
-        self.click_pos: None = None
+        self.click_pos = None
 
     def double_click(self, event: Event) -> None:
         """Selects the line when double clicked -- Internal use only"""
@@ -189,13 +184,6 @@ class TkLineNumbers(Canvas):
         self.textwidget.mark_set("insert", self.textwidget.index(f"@{event.x},{event.y} linestart + 1 line"))
         self.redraw()
 
-        """
-        Issues:
-         - Erratic behavior causes it to pause and requires reentering the text widget
-         - If I click and start dragging, drag into the text, and then back into the linenumbers it has a weird behavior
-         - If I drag into the text widget and keep dragging, sel is not added
-        """  # TODO: Fix issues
-
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
         start_pos: str = self.textwidget.index("insert")
@@ -226,28 +214,27 @@ class TkLineNumbers(Canvas):
 if __name__ == "__main__":
     from platform import system
     from tkinter import Text, Tk
-    from tkinter.font import Font
     from tkinter.ttk import Style
 
-    if system() == "Darwin":
+    if system() in ("Darwin", "Windows"):
         contmand: str = "Command"
     else:
         contmand: str = "Control"
 
     from tklinenums import TkLineNumbers
 
-    root: Tk = Tk()
+    root = Tk()
 
-    style: Style = Style()
+    style = Style()
     style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
 
-    text: Text = Text(root, wrap="char", font=("Courier New bold", 15))
+    text = Text(root, wrap="char", font=("Courier New bold", 15))
     text.pack(side="right")
 
     for i in range(50):
         text.insert("end", f"Line {i+1}\n")
 
-    linenums: TkLineNumbers = TkLineNumbers(root, text)
+    linenums = TkLineNumbers(root, text)
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
