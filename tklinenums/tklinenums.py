@@ -19,15 +19,14 @@ class TkLineNumError(Exception):
 class TkLineNumbers(Canvas):
     """
     Creates a line number widget for a text widget. Options are the same as a tkinter Canvas widget and add the following:
-        * -justify (str): The justification of the line numbers. Can be "left", "right", or "center". Default is "left".
-        * -font (tuple | Font | str | None): The font of the line numbers. Default is the text widget's font.
         * -editor (Text): The text widget to attach the line numbers to. (Required) (Second argument after master)
+        * -justify (str): The justification of the line numbers. Can be "left", "right", or "center". Default is "left".
 
     Methods to be used outside externally:
         * .redraw(): Redraws the widget
-        * .resize(): Calculates the required width of the widget and resizes it according to the text widget's font and the number of lines
+        * .resize(): Calculates the required width of the widget and resizes it according to the text widget's font and the number of lines (run in redraw())
         * .set_to_ttk_style(): Sets the foreground and background colors to the ttk style of the text widget
-        * .reload_font(): Reloads the font of the widget (Requires font as argument)
+        * .reload(): Sets the widget to the ttk style, and redraws the widget
     """
 
     def __init__(
@@ -39,8 +38,7 @@ class TkLineNumbers(Canvas):
         **kwargs,
     ) -> None:
         """Initializes the widget -- Internal use only"""
-        self.textwidget: Misc = editor
-        self.master: Misc = master
+        self.editor: Misc = editor
         self.justify: str = justify
         Canvas.__init__(
             self,
@@ -75,10 +73,10 @@ class TkLineNumbers(Canvas):
         self.resize()
         self.delete("all")
 
-        first_line: int = int(self.textwidget.index("@0,0").split(".")[0])
-        last_line: int = int(self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]) + 1
+        first_line: int = int(self.editor.index("@0,0").split(".")[0])
+        last_line: int = int(self.editor.index(f"@0,{self.editor.winfo_height()}").split(".")[0]) + 1
         for lineno in range(first_line, last_line):
-            dlineinfo: tuple | None = self.textwidget.dlineinfo(f"{lineno}.0")
+            dlineinfo: tuple | None = self.editor.dlineinfo(f"{lineno}.0")
             if dlineinfo is None:
                 continue
             self.create_text(
@@ -90,13 +88,13 @@ class TkLineNumbers(Canvas):
                 dlineinfo[1],
                 text=f" {lineno} " if self.justify != "center" else f"{lineno}",
                 anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
-                font=self.textwidget.cget("font"),
+                font=self.editor.cget("font"),
                 fill=self.foreground,
             )
 
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
-        self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
+        self.editor.yview_scroll(int(scroll_inversion(event.delta)), "units")
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -104,20 +102,20 @@ class TkLineNumbers(Canvas):
         if event.state == 1:
             self.shift_click(event)
             return
-        self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.mark_set(
+        self.editor.tag_remove("sel", "1.0", "end")
+        self.editor.mark_set(
             "insert",
-            f"{self.textwidget.index(f'@{event.x},{event.y}').split('.')[0]}.0",
+            f"{self.editor.index(f'@{event.x},{event.y}').split('.')[0]}.0",
         )
-        self.textwidget.see("insert")
-        first_visible_line = int(self.textwidget.index("@0,0").split(".")[0])
-        last_visible_line = int(self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0])
-        insert = int(self.textwidget.index("insert").split(".")[0])
+        self.editor.see("insert")
+        first_visible_line = int(self.editor.index("@0,0").split(".")[0])
+        last_visible_line = int(self.editor.index(f"@0,{self.editor.winfo_height()}").split(".")[0])
+        insert = int(self.editor.index("insert").split(".")[0])
         if insert == first_visible_line:
-            self.textwidget.yview_scroll(scroll_inversion(-1), "units")
+            self.editor.yview_scroll(scroll_inversion(-1), "units")
         elif insert == last_visible_line:
-            self.textwidget.yview_scroll(scroll_inversion(1), "units")
-        self.click_pos: str = self.textwidget.index("insert")
+            self.editor.yview_scroll(scroll_inversion(1), "units")
+        self.click_pos: str = self.editor.index("insert")
 
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
@@ -127,29 +125,31 @@ class TkLineNumbers(Canvas):
     def double_click(self, event: Event) -> None:
         """Selects the line when double clicked -- Internal use only"""
         del event
-        self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", "insert", "insert + 1 line")
+        self.editor.tag_remove("sel", "1.0", "end")
+        self.editor.tag_add("sel", "insert", "insert + 1 line")
 
     def auto_scroll(self, event: Event) -> None:
         """Automatically scrolls the text widget when the mouse is near the top or bottom, similar to the drag function -- Internal use only"""
         if self.click_pos is None:
             return
-        # scroll_inversion is not used here as this is a direct translation from the Text widget's auto_scroll function
         if event.y >= self.winfo_height():
-            self.textwidget.yview_scroll(1, "units")
+            self.editor.yview_scroll(1, "units")
         elif event.y < 0:
-            self.textwidget.yview_scroll(-1, "units")
+            self.editor.yview_scroll(-1, "units")
+        # elif event.x >= self.winfo_width() or event.x < 0:
+        #     self.need_outside_events = True
+        #     return
         else:
             return
-        start: str = self.textwidget.index("insert")
+        start: str = str(float(self.editor.index("insert"))-1)
         end: str = self.click_pos
-        if self.textwidget.compare("insert", ">", self.click_pos):
-            start, end = end, str(float(start) + 1)
+        if self.editor.compare("insert", ">", self.click_pos):
+            start, end = end, str(float(start) + 2)
         else:
             end = str(float(end) + 1)
-        self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", start, end)
-        self.textwidget.mark_set("insert", f"@{event.x},{event.y}")
+        self.editor.tag_remove("sel", "1.0", "end")
+        self.editor.tag_add("sel", start, end)
+        self.editor.mark_set("insert", f"@{event.x},{event.y}")
         self.cancellable_after = self.after(50, self.auto_scroll, event)
 
     def stop_auto_scroll(self, event: Event) -> None:
@@ -162,37 +162,36 @@ class TkLineNumbers(Canvas):
         """When click dragging it selects the text -- Internal use only"""
         if (
             self.click_pos is None
-            or event.x < 0
-            or event.x >= self.winfo_width()
+            # or event.x < 0 # When I drag into the text and try to sel It is because of this and the next line
+            # or event.x >= self.winfo_width()
             or event.y < 0
             or event.y >= self.winfo_height()
         ):
             return
-        start: str = self.textwidget.index("insert")
+        start: str = self.editor.index("insert")
         end: str = self.click_pos
-        if self.textwidget.compare("insert", ">", self.click_pos):
+        if self.editor.compare("insert", ">", self.click_pos):
             start, end = end, str(float(start) + 1)
         else:
             end = str(float(end) + 1)
-
-        self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0")
-        self.textwidget.mark_set("insert", self.textwidget.index(f"@{event.x},{event.y} linestart + 1 line"))
+        self.editor.tag_remove("sel", "1.0", "end")
+        self.editor.tag_add("sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0")
+        self.editor.mark_set("insert", self.editor.index(f"@{event.x},{event.y} linestart"))
         self.redraw()
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
-        start_pos: str = self.textwidget.index("insert")
-        end_pos: str = self.textwidget.index(f"@0,{event.y}")
-        self.textwidget.tag_remove("sel", "1.0", "end")
-        if self.textwidget.compare(start_pos, ">", end_pos):
+        start_pos: str = self.editor.index("insert")
+        end_pos: str = self.editor.index(f"@0,{event.y}")
+        self.editor.tag_remove("sel", "1.0", "end")
+        if self.editor.compare(start_pos, ">", end_pos):
             start_pos, end_pos = end_pos, start_pos
-        self.textwidget.tag_add("sel", start_pos, end_pos)
+        self.editor.tag_add("sel", start_pos, end_pos)
 
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
-        end: str = self.textwidget.index("end").split(".")[0]
-        self.config(width=Font(font=(temp_font := self.textwidget.cget("font"))).measure(" 1234 ")) if int(
+        end: str = self.editor.index("end").split(".")[0]
+        self.config(width=Font(font=(temp_font := self.editor.cget("font"))).measure(" 1234 ")) if int(
             end
         ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
