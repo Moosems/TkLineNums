@@ -2,7 +2,7 @@ from platform import system
 from tkinter import Text, Tk
 from tkinter.ttk import Style
 
-if system() in ("Darwin", "Windows"):
+if system() == "Darwin":
     contmand: str = "Command"
 else:
     contmand: str = "Control"
