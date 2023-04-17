@@ -139,10 +139,6 @@ class TkLineNumbers(Canvas):
             self.textwidget.yview_scroll(1, "units")
         elif event.y < 0:
             self.textwidget.yview_scroll(-1, "units")
-        elif event.x >= self.winfo_width():
-            self.textwidget.xview_scroll(2, "units")
-        elif event.x < 0:
-            self.textwidget.xview_scroll(-2, "units")
         else:
             return
         start: str = self.textwidget.index("insert")
