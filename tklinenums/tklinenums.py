@@ -136,9 +136,6 @@ class TkLineNumbers(Canvas):
             self.editor.yview_scroll(1, "units")
         elif event.y < 0:
             self.editor.yview_scroll(-1, "units")
-        # elif event.x >= self.winfo_width() or event.x < 0:
-        #     self.need_outside_events = True
-        #     return
         else:
             return
         start: str = str(float(self.editor.index("insert"))-1)
@@ -162,8 +159,6 @@ class TkLineNumbers(Canvas):
         """When click dragging it selects the text -- Internal use only"""
         if (
             self.click_pos is None
-            # or event.x < 0 # When I drag into the text and try to sel It is because of this and the next line
-            # or event.x >= self.winfo_width()
             or event.y < 0
             or event.y >= self.winfo_height()
         ):
