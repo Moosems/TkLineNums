@@ -138,15 +138,7 @@ class TkLineNumbers(Canvas):
             self.editor.yview_scroll(-1, "units")
         else:
             return
-        start: str = str(float(self.editor.index("insert"))-1)
-        end: str = self.click_pos
-        if self.editor.compare("insert", ">", self.click_pos):
-            start, end = end, str(float(start) + 2)
-        else:
-            end = str(float(end) + 1)
-        self.editor.tag_remove("sel", "1.0", "end")
-        self.editor.tag_add("sel", start, end)
-        self.editor.mark_set("insert", f"@{event.x},{event.y}")
+        self.select_text(event=event)
         self.cancellable_after = self.after(50, self.auto_scroll, event)
 
     def stop_auto_scroll(self, event: Event) -> None:
@@ -164,15 +156,21 @@ class TkLineNumbers(Canvas):
         ):
             return
         start: str = self.editor.index("insert")
-        end: str = self.click_pos
+        self.select_text(start, event=event)
+
+    def select_text(self, start: str | None = None, end: str | None = None, event: Event = Event) -> None:
+        """Selects the text between the start and end positions -- Internal use only"""
+        if start is None:
+            start: str = self.editor.index(f"@{event.x},{event.y}")
+        if end is None:
+            end: str = self.click_pos
         if self.editor.compare("insert", ">", self.click_pos):
-            start, end = end, str(float(start) + 1)
+            start, end = end, str(float(start) + 2)
         else:
             end = str(float(end) + 1)
         self.editor.tag_remove("sel", "1.0", "end")
-        self.editor.tag_add("sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0")
-        self.editor.mark_set("insert", self.editor.index(f"@{event.x},{event.y} linestart"))
-        self.redraw()
+        self.editor.tag_add("sel", start, end)
+        self.editor.mark_set("insert", f"@{event.x},{event.y} linestart")
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
@@ -182,6 +180,7 @@ class TkLineNumbers(Canvas):
         if self.editor.compare(start_pos, ">", end_pos):
             start_pos, end_pos = end_pos, start_pos
         self.editor.tag_add("sel", start_pos, end_pos)
+        self.redraw()
 
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
@@ -206,7 +205,7 @@ if __name__ == "__main__":
     from tkinter import Text, Tk
     from tkinter.ttk import Style
 
-    if system() in ("Darwin", "Windows"):
+    if system() == "Darwin":
         contmand: str = "Command"
     else:
         contmand: str = "Control"
