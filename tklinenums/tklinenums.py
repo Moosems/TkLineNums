@@ -6,10 +6,10 @@ from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
 from typing import Callable
 
-if system() in ("Darwin" or "Windows"):
-    scroll_inversion: Callable[[int], int] = lambda delta: -delta
-else:
-    scroll_inversion: Callable[[int], int] = lambda delta: int(delta / 120)
+
+def scroll_inversion(delta: int) -> int:
+    """Corrects scrolling numbers across platforms"""
+    return -delta if system() in ("Darwin", "Linux") else (delta / 120)
 
 
 class TkLineNumError(Exception):
@@ -24,7 +24,8 @@ class TkLineNumbers(Canvas):
 
     Methods to be used outside externally:
         * .redraw(): Redraws the widget
-        * .resize(): Calculates the required width of the widget and resizes it according to the text widget's font and the number of lines (run in redraw())
+        * .resize(): Calculates the required width of the widget and resizes it 
+        according to the text widget's font and the number of lines (run in redraw())
         * .set_to_ttk_style(): Sets the foreground and background colors to the ttk style of the text widget
         * .reload(): Sets the widget to the ttk style, and redraws the widget
     """
@@ -53,7 +54,8 @@ class TkLineNumbers(Canvas):
         self.set_to_ttk_style()
 
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
-        # If I'm mouse scrolling and I am clicking on line numbers, it should select the lines from where I clicked to where I am scrolling
+        # If I'm mouse scrolling and I am clicking on line numbers, 
+        # it should select the lines from where I clicked to where I am scrolling
         # TODO: Make it so that it selects the lines from where I clicked to where I am scrolling
         self.bind("<Button-1>", self.click_see, add=True)
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
@@ -74,7 +76,9 @@ class TkLineNumbers(Canvas):
         self.delete("all")
 
         first_line: int = int(self.editor.index("@0,0").split(".")[0])
-        last_line: int = int(self.editor.index(f"@0,{self.editor.winfo_height()}").split(".")[0]) + 1
+        last_line: int = (
+            int(self.editor.index(f"@0,{self.editor.winfo_height()}").split(".")[0]) + 1
+        )
         for lineno in range(first_line, last_line):
             dlineinfo: tuple | None = self.editor.dlineinfo(f"{lineno}.0")
             if dlineinfo is None:
@@ -109,7 +113,9 @@ class TkLineNumbers(Canvas):
         )
         self.editor.see("insert")
         first_visible_line = int(self.editor.index("@0,0").split(".")[0])
-        last_visible_line = int(self.editor.index(f"@0,{self.editor.winfo_height()}").split(".")[0])
+        last_visible_line = int(
+            self.editor.index(f"@0,{self.editor.winfo_height()}").split(".")[0]
+        )
         insert = int(self.editor.index("insert").split(".")[0])
         if insert == first_visible_line:
             self.editor.yview_scroll(scroll_inversion(-1), "units")
@@ -129,7 +135,8 @@ class TkLineNumbers(Canvas):
         self.editor.tag_add("sel", "insert", "insert + 1 line")
 
     def auto_scroll(self, event: Event) -> None:
-        """Automatically scrolls the text widget when the mouse is near the top or bottom, similar to the drag function -- Internal use only"""
+        """Automatically scrolls the text widget when the mouse is near the top or bottom, 
+        similar to the drag function -- Internal use only"""
         if self.click_pos is None:
             return
         if event.y >= self.winfo_height():
@@ -149,16 +156,14 @@ class TkLineNumbers(Canvas):
 
     def drag(self, event: Event) -> None:
         """When click dragging it selects the text -- Internal use only"""
-        if (
-            self.click_pos is None
-            or event.y < 0
-            or event.y >= self.winfo_height()
-        ):
+        if self.click_pos is None or event.y < 0 or event.y >= self.winfo_height():
             return
         start: str = self.editor.index("insert")
         self.select_text(start, event=event)
 
-    def select_text(self, start: str | None = None, end: str | None = None, event: Event = Event) -> None:
+    def select_text(
+        self, start: str | None = None, end: str | None = None, event: Event = Event
+    ) -> None:
         """Selects the text between the start and end positions -- Internal use only"""
         if start is None:
             start: str = self.editor.index(f"@{event.x},{event.y}")
@@ -185,14 +190,16 @@ class TkLineNumbers(Canvas):
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
         end: str = self.editor.index("end").split(".")[0]
-        self.config(width=Font(font=(temp_font := self.editor.cget("font"))).measure(" 1234 ")) if int(
-            end
-        ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
+        self.config(
+            width=Font(font=(temp_font := self.editor.cget("font"))).measure(" 1234 ")
+        ) if int(end) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
     def set_to_ttk_style(self) -> None:
         """Sets the widget to the ttk style"""
         self["bg"]: str = self.tk.eval("ttk::style lookup TLineNumbers -background")
-        self.foreground: str = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
+        self.foreground: str = self.tk.eval(
+            "ttk::style lookup TLineNumbers -foreground"
+        )
 
     def reload(self) -> None:
         """Reloads the widget"""
@@ -201,16 +208,13 @@ class TkLineNumbers(Canvas):
 
 
 if __name__ == "__main__":
-    from platform import system
-    from tkinter import Text, Tk
+    from tkinter import Tk
     from tkinter.ttk import Style
 
     if system() == "Darwin":
         contmand: str = "Command"
     else:
         contmand: str = "Control"
-
-    from tklinenums import TkLineNumbers
 
     root = Tk()
 
@@ -227,8 +231,10 @@ if __name__ == "__main__":
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
-    text.bind(f"<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
-    text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
+    text.bind("<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
+    text.bind(
+        f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True
+    )
     text["yscrollcommand"] = linenums.redraw
 
     root.mainloop()

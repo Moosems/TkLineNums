@@ -24,7 +24,7 @@ linenums = TkLineNumbers(root, text)
 linenums.pack(fill="y", side="left", expand=True)
 
 text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
-text.bind(f"<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
+text.bind("<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
 text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
 text["yscrollcommand"] = linenums.redraw
 
