@@ -9,8 +9,7 @@ from typing import Callable
 
 def scroll_inversion(delta: int) -> int:
     """Corrects scrolling numbers across platforms"""
-    return -delta if system() in ("Darwin", "Linux") else (delta / 120)
-
+    return -(delta if system() == "Darwin" else delta / 120)
 
 class TkLineNumError(Exception):
     ...
@@ -53,13 +52,17 @@ class TkLineNumbers(Canvas):
         )
         self.set_to_ttk_style()
 
+        #Mouse scroll binding
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
-        # If I'm mouse scrolling and I am clicking on line numbers, 
-        # it should select the lines from where I clicked to where I am scrolling
-        # TODO: Make it so that it selects the lines from where I clicked to where I am scrolling
+        self.bind("<Button-4>", self.mouse_scroll, add=True)
+        self.bind("<Button-5>", self.mouse_scroll, add=True)
+
+        #Click bindings
         self.bind("<Button-1>", self.click_see, add=True)
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
         self.bind("<Double-Button-1>", self.double_click, add=True)
+
+        #Drag bindings
         self.bind("<Button1-Motion>", self.drag, add=True)
         self.bind("<Button1-Leave>", self.auto_scroll, add=True)
         self.bind("<Button1-Enter>", self.stop_auto_scroll, add=True)
