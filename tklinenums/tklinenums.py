@@ -9,7 +9,8 @@ from typing import Callable
 
 def scroll_inversion(delta: int) -> int:
     """Corrects scrolling numbers across platforms"""
-    return -(delta if system() == "Darwin" else delta / 120)
+    return -delta if system() == "Darwin" else delta / 120
+
 
 class TkLineNumError(Exception):
     ...
@@ -23,7 +24,7 @@ class TkLineNumbers(Canvas):
 
     Methods to be used outside externally:
         * .redraw(): Redraws the widget
-        * .resize(): Calculates the required width of the widget and resizes it 
+        * .resize(): Calculates the required width of the widget and resizes it
         according to the text widget's font and the number of lines (run in redraw())
         * .set_to_ttk_style(): Sets the foreground and background colors to the ttk style of the text widget
         * .reload(): Sets the widget to the ttk style, and redraws the widget
@@ -52,17 +53,17 @@ class TkLineNumbers(Canvas):
         )
         self.set_to_ttk_style()
 
-        #Mouse scroll binding
+        # Mouse scroll binding
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
         self.bind("<Button-4>", self.mouse_scroll, add=True)
         self.bind("<Button-5>", self.mouse_scroll, add=True)
 
-        #Click bindings
+        # Click bindings
         self.bind("<Button-1>", self.click_see, add=True)
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
         self.bind("<Double-Button-1>", self.double_click, add=True)
 
-        #Drag bindings
+        # Drag bindings
         self.bind("<Button1-Motion>", self.drag, add=True)
         self.bind("<Button1-Leave>", self.auto_scroll, add=True)
         self.bind("<Button1-Enter>", self.stop_auto_scroll, add=True)
@@ -138,7 +139,7 @@ class TkLineNumbers(Canvas):
         self.editor.tag_add("sel", "insert", "insert + 1 line")
 
     def auto_scroll(self, event: Event) -> None:
-        """Automatically scrolls the text widget when the mouse is near the top or bottom, 
+        """Automatically scrolls the text widget when the mouse is near the top or bottom,
         similar to the drag function -- Internal use only"""
         if self.click_pos is None:
             return
