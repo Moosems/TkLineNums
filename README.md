@@ -14,13 +14,13 @@
 - Shift clicking will select all text from the end of the line clicked by cursor and the insert position.
 - Scrolling the linebar will scroll the text widget (and vice versa).
 - Can handle elided lines (elided lines are lines that are not visible in the text widget).
-- Allows users to easily set the color of the line numbers.
-- Supports ttk themes (by usage of the `.set_to_ttk_style()` method)
+- Supports ttk themes and allows easy color customization.
 - Supports left, right, and center alignment with the `-justify` option
 - Clicking and then dragging the mouse will scroll the text widget (see [#8](https://github.com/Moosems/TkLineNums/pull/8))
 
 # Installation
-`pip install tklinenums`
+
+In the Command Line, paste the following: `pip install tklinenums`.
 
 ## Documentation
 ### `TkLineNums` Widget
@@ -29,6 +29,7 @@
 |master|The parent widget|Tkinter widget (defaults to `tkinter.Misc`)|
 |textwidget|The `Text` widget the line numbers will connect to|Tkinter `Text` widget (or child class)|
 |justify|The alignment of the line numbers|A string as either `"left"`, `"right"`, or `"center"`|
+|color_provider|A function or tuple that returns a foreground and background color for the line number or None (if nothing is provided it defaults to using the coloring of the `Text` widget)| `Callable[[], tuple[str, str]] \| None` that defualts to `None`|
 |*args|Arguments for the `Canvas` widget|Any arguments used for the `Canvas` widget|
 |**kwargs|Keyword arguments for the `Canvas` widget|Any keyword arguments used for the `Canvas` widget|
 
@@ -46,6 +47,12 @@ root = Tk()
 style = Style()
 style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
 
+#Create a style_provider function that returns the ttk style for the line numbers
+def ttk_style_provider():
+    fg: str = style.lookup("TLineNumbers", "foreground")
+    bg: str = style.lookup("TLineNumbers", "background")
+    return (fg, bg)
+
 # Create the Text widget and pack it to the right
 text = Text(root)
 text.pack(side="right")
@@ -55,7 +62,8 @@ for i in range(50):
     text.insert("end", f"Line {i+1}\n")
 
 # Create the TkLineNumbers widget and pack it to the left
-linenums = TkLineNumbers(root, text)
+linenums = TkLineNumbers(root, text, "right", ttk_style_provider)
+# Remember, the color_provider and justify are optional and can be left out
 linenums.pack(fill="y", side="left")
 
 # Redraw the line numbers when the text widget contents are modified
