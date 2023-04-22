@@ -25,7 +25,7 @@
 |Options|Description|Type|
 |---|---|---|
 |master|The parent widget|Tkinter widget (defaults to `tkinter.Misc`)|
-|editor|The `Text` widget the line numbers will connect to|Tkinter `Text` widget (or child class)|
+|textwidget|The `Text` widget the line numbers will connect to|Tkinter `Text` widget (or child class)|
 |justify|The alignment of the line numbers|A string as either `"left"`, `"right"`, or `"center"`|
 |*args|Arguments for the `Canvas` widget|Any arguments used for the `Canvas` widget|
 |**kwargs|Keyword arguments for the `Canvas` widget|Any keyword arguments used for the `Canvas` widget|

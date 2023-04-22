@@ -22,7 +22,7 @@ class TkLineNumError(Exception):
 class TkLineNumbers(Canvas):
     """
     Creates a line number widget for a text widget. Options are the same as a tkinter Canvas widget and add the following:
-        * -editor (Text): The text widget to attach the line numbers to. (Required) (Second argument after master)
+        * -textwidget (Text): The text widget to attach the line numbers to. (Required) (Second argument after master)
         * -justify (str): The justification of the line numbers. Can be "left", "right", or "center". Default is "left".
 
     Methods to be used outside externally:
@@ -36,7 +36,7 @@ class TkLineNumbers(Canvas):
     def __init__(
         self: TkLineNumbers,
         master: Misc,
-        editor: Text,
+        textwidget: Text,
         justify: str = "left",
         *args,
         **kwargs,
@@ -54,7 +54,7 @@ class TkLineNumbers(Canvas):
         )
 
         # Set variable
-        self.textwidget = editor
+        self.textwidget = textwidget
         self.master = master
         self.justify = justify
         self.click_pos: None = None
@@ -78,18 +78,18 @@ class TkLineNumbers(Canvas):
         self.bind("<Button1-Enter>", self.stop_auto_scroll, add=True)
 
         # Set the yscrollcommand of the text widget to redraw the widget
-        editor["yscrollcommand"] = self.redraw
+        textwidget["yscrollcommand"] = self.redraw
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
-        # Resize the widget based on the number of lines in the editor
+        # Resize the widget based on the number of lines in the textwidget
         del args
         self.resize()
 
         # Delete all the old line numbers
         self.delete("all")
 
-        # Get the first and last line numbers for the editor (all other lines are in between)
+        # Get the first and last line numbers for the textwidget (all other lines are in between)
         first_line, last_line = int(self.textwidget.index("@0,0").split(".")[0]), int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
@@ -110,7 +110,7 @@ class TkLineNumbers(Canvas):
                 dlineinfo[1],
                 text=f" {lineno} " if self.justify != "center" else f"{lineno}",
                 anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
-                font=self.editor.cget("font"),
+                font=self.textwidget.cget("font"),
                 fill=self.foreground,
             )
 
@@ -118,8 +118,7 @@ class TkLineNumbers(Canvas):
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
 
         # Scroll the text widget and then redraw the widget
-        self.editor.yview_scroll(int(scroll_inversion(event.delta)), "units")
-        self.redraw()
+        self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
 
     def click_see(self, event: Event) -> None:
         """When clicking on a line number it scrolls to that line if not shifting -- Internal use only"""
@@ -135,7 +134,7 @@ class TkLineNumbers(Canvas):
         # Set the insert position to the line number clicked
         self.textwidget.mark_set(
             "insert",
-            f"{self.editor.index(f'@{event.x},{event.y}').split('.')[0]}.0",
+            f"{self.textwidget.index(f'@{event.x},{event.y}').split('.')[0]}.0",
         )
 
         # Scroll to the location of the insert position
@@ -147,12 +146,12 @@ class TkLineNumbers(Canvas):
         ), int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
-        insert = int(self.editor.index("insert").split(".")[0])
+        insert = int(self.textwidget.index("insert").split(".")[0])
         if insert == first_visible_line:
-            self.editor.yview_scroll(scroll_inversion(-1), "units")
+            self.textwidget.yview_scroll(scroll_inversion(-1), "units")
         elif insert == last_visible_line:
-            self.editor.yview_scroll(scroll_inversion(1), "units")
-        self.click_pos: str = self.editor.index("insert")
+            self.textwidget.yview_scroll(scroll_inversion(1), "units")
+        self.click_pos: str = self.textwidget.index("insert")
 
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
@@ -164,8 +163,8 @@ class TkLineNumbers(Canvas):
 
         # Remove the selection tag from the text widget and select the line
         del event
-        self.editor.tag_remove("sel", "1.0", "end")
-        self.editor.tag_add("sel", "insert", "insert + 1 line")
+        self.textwidget.tag_remove("sel", "1.0", "end")
+        self.textwidget.tag_add("sel", "insert", "insert + 1 line")
 
     def auto_scroll(self, event: Event) -> None:
         """Automatically scrolls the text widget when the mouse is near the top or bottom,
@@ -176,9 +175,9 @@ class TkLineNumbers(Canvas):
         # Taken from the Text source: https://github.com/tcltk/tk/blob/main/library/text.tcl#L676
         # Scrolls the widget if the cursor is off of the screen
         if event.y >= self.winfo_height():
-            self.editor.yview_scroll(1, "units")
+            self.textwidget.yview_scroll(1, "units")
         elif event.y < 0:
-            self.editor.yview_scroll(-1, "units")
+            self.textwidget.yview_scroll(-1, "units")
         else:
             return
 
@@ -204,7 +203,7 @@ class TkLineNumbers(Canvas):
             return
 
         # Select the text
-        start: str = self.editor.index("insert")
+        start: str = self.textwidget.index("insert")
         self.select_text(start, event=event)
 
     def select_text(
@@ -214,33 +213,32 @@ class TkLineNumbers(Canvas):
 
         # If the start and end positions are None, set them to the click position and the cursor position
         if start is None:
-            start: str = self.editor.index(f"@{event.x},{event.y}")
+            start: str = self.textwidget.index(f"@{event.x},{event.y}")
         if end is None:
             end: str = self.click_pos
 
         # If the click position is greater than the cursor position, swap them
-        if self.editor.compare("insert", ">", self.click_pos):
+        if self.textwidget.compare("insert", ">", self.click_pos):
             start, end = end, str(float(start) + 2)
         else:
             end = str(float(end) + 1)
 
         # Select the text and move the insert position to the start of the
         # line corresponding to the event position
-        self.editor.tag_remove("sel", "1.0", "end")
-        self.editor.tag_add("sel", start, end)
-        self.editor.mark_set("insert", f"@{event.x},{event.y} linestart")
+        self.textwidget.tag_remove("sel", "1.0", "end")
+        self.textwidget.tag_add("sel", start, end)
+        self.textwidget.mark_set("insert", f"@{event.x},{event.y} linestart")
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
 
         # Add the selection tag to the text between the click and the cursor
-        start_pos: str = self.editor.index("insert")
-        end_pos: str = self.editor.index(f"@0,{event.y}")
-        self.editor.tag_remove("sel", "1.0", "end")
-        if self.editor.compare(start_pos, ">", end_pos):
+        start_pos: str = self.textwidget.index("insert")
+        end_pos: str = self.textwidget.index(f"@0,{event.y}")
+        self.textwidget.tag_remove("sel", "1.0", "end")
+        if self.textwidget.compare(start_pos, ">", end_pos):
             start_pos, end_pos = end_pos, start_pos
-        self.editor.tag_add("sel", start_pos, end_pos)
-        self.redraw()
+        self.textwidget.tag_add("sel", start_pos, end_pos)
 
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
@@ -259,7 +257,7 @@ class TkLineNumbers(Canvas):
 
         # Set the background and foreground to the ttk style
         self["bg"] = self.tk.eval("ttk::style lookup TLineNumbers -background")
-        self["fg"] = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
+        self.foreground = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
 
     def reload(self) -> None:
         """Reloads the widget"""
