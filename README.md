@@ -13,6 +13,8 @@
 - Clicking on line numbers will set the insert to the beginning of the line.
 - Shift clicking will select all text from the end of the line clicked by cursor and the insert position.
 - Scrolling the linebar will scroll the text widget (and vice versa).
+- Can handle elided lines (elided lines are lines that are not visible in the text widget).
+- Allows users to easily set the color of the line numbers.
 - Supports ttk themes (by usage of the `.set_to_ttk_style()` method)
 - Supports left, right, and center alignment with the `-justify` option
 - Clicking and then dragging the mouse will scroll the text widget (see [#8](https://github.com/Moosems/TkLineNums/pull/8))

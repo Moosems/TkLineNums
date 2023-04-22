@@ -37,6 +37,7 @@ class TkLineNumbers(Canvas):
         master: Misc,
         textwidget: Text,
         justify: str = "left",
+        ttk_theme: bool = False,
         *args,
         **kwargs,
     ) -> None:
@@ -57,10 +58,12 @@ class TkLineNumbers(Canvas):
         self.master = master
         self.justify = justify
         self.click_pos: None = None
+        self.foreground_color: str = self.textwidget.cget("foreground")
+        self.ttk_theme = ttk_theme
 
         # Set style and its binding
-        self.set_to_ttk_style()
-        self.bind("<<ThemeChanged>>", self.set_to_ttk_style, add=True)
+        self.set_colors()
+        self.bind("<<ThemeChanged>>", self.set_colors, add=True)
 
         # Mouse scroll binding
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
@@ -124,7 +127,7 @@ class TkLineNumbers(Canvas):
                 text=f" {lineno} " if self.justify != "center" else f"{lineno}",
                 anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
                 font=self.textwidget.cget("font"),
-                fill=self.foreground,
+                fill=self.foreground_color,
             )
 
     def mouse_scroll(self, event: Event) -> None:
@@ -271,18 +274,32 @@ class TkLineNumbers(Canvas):
             end
         ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
-    def set_to_ttk_style(self) -> None:
-        """Sets the widget to the ttk style"""
+    def set_colors(self, background: str | None = None, foreground: str | None = None, ttk_style: bool | None = None) -> None:
+        """Sets the colors of the widget"""
 
-        # Set the background and foreground to the ttk style
-        self["bg"] = self.tk.eval("ttk::style lookup TLineNumbers -background")
-        self.foreground = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
+        # self.ttk_theme already holds a boolean value but if one is provided, use that
+        if ttk_style is not None:
+            self.ttk_theme = ttk_style
+
+        # If the ttk style is True, set the colors to the ttk style
+        if self.ttk_theme:
+            # Akuli: How do I know if these are being changed or if the style has a set value?
+            # I don't want to override the user's style if they have set it
+            self["bg"] = self.tk.eval("ttk::style lookup TLineNumbers -background")
+            self.foreground_color = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
+            return
+
+        # If the background and foreground are not None, set them to the specified colors
+        if background is not None:
+            self["bg"] = background
+        if foreground is not None:
+            self.foreground_color = foreground
 
     def reload(self) -> None:
         """Reloads the widget"""
 
         # Set the widget to the ttk style and redraw it
-        self.set_to_ttk_style()
+        self.set_colors()
         self.redraw()
 
 
@@ -298,7 +315,7 @@ if __name__ == "__main__":
     root = Tk()
 
     style = Style()
-    style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
+    style.configure("TLineNumbers", background="#ffffff")
 
     text = Text(root)
     text.pack(side="right")
@@ -306,7 +323,8 @@ if __name__ == "__main__":
     for i in range(50):
         text.insert("end", f"Line {i+1}\n")
 
-    linenums = TkLineNumbers(root, text)
+    linenums = TkLineNumbers(root, text, ttk_theme=True)
+    linenums.set_colors(foreground="#2197db")
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
