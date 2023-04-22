@@ -37,7 +37,7 @@ class TkLineNumbers(Canvas):
         justify: str = "left",
         # None means take colors from text widget (default).
         # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
-        color_provider: Callable[[], tuple[str, str]] | tuple | None = None,
+        color_provider: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
         *args,
         **kwargs,
     ) -> None:

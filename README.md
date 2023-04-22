@@ -29,7 +29,7 @@ In the Command Line, paste the following: `pip install tklinenums`.
 |master|The parent widget|Tkinter widget (defaults to `tkinter.Misc`)|
 |textwidget|The `Text` widget the line numbers will connect to|Tkinter `Text` widget (or child class)|
 |justify|The alignment of the line numbers|A string as either `"left"`, `"right"`, or `"center"`|
-|color_provider|A way to provide coloring to the line numbers|A function, tuple, or None that gives the foreground and background colors respecively (None makes it default to using the `Text` widgets coloring|
+|color_provider|A way to provide coloring to the line numbers|A function, `(foreground, background)` tuple, or None. None (default) makes it use the `Text` widget's coloring. The function should return a `(foreground, background)` tuple: it will be called whenever the colors are needed, and it is useful when the colors can change.|
 |*args|Arguments for the `Canvas` widget|Any arguments used for the `Canvas` widget|
 |**kwargs|Keyword arguments for the `Canvas` widget|Any keyword arguments used for the `Canvas` widget|
 
