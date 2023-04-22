@@ -1,7 +1,7 @@
 <h1 align="center">TkLineNums</h1>
 
 > **Note**
-> If Python was installed via Homebrew, installed on Mac by default, or installed on Linux, tkinter will likely not work properly and may need to be installed via `brew install python-tk` or `sudo apt-get install python-tk`. Linux machines have plenty of variations for installation as is documented [here](https://www.geeksforgeeks.org/how-to-install-tkinter-on-linux/#:~:text=For%20Debian%2Dbased%20Linux%3A).
+> If Python was installed via Homebrew, installed on Mac by default, or installed on Linux, tkinter will likely not work properly and may need to be installed via `brew install python-tk` or with the distro package manager on Linux as documented [here](https://tecadmin.net/how-to-install-python-tkinter-on-linux/).
 
 ## Description
 `TkLineNums` is a simple line numbering widget for Python's `tkinter` GUI library. It is directly connects to a `Text` widget and even supports ttk themes through the set_to_ttk_style method.
