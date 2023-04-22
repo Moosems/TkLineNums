@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from platform import system
-from tkinter import Canvas, Event, Misc, Text
+from tkinter import Canvas, Event, Misc, Text, getboolean
 from tkinter.font import Font
 
 
@@ -99,8 +99,18 @@ class TkLineNumbers(Canvas):
 
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, last_line + 1):
+            # Check if line is elided
+            tags: list = self.textwidget.tag_names(f"{lineno}.0")
+            elide_values: tuple = (
+                self.textwidget.tag_cget(tag, "elide") for tag in tags
+            )
+            # elide values can be empty
+            line_elided: bool = any(getboolean(v or "false") for v in elide_values)
+
             # If the line is not visible, skip it
-            if (dlineinfo := self.textwidget.dlineinfo(f"{lineno}.0")) is None:
+            if (
+                dlineinfo := self.textwidget.dlineinfo(f"{lineno}.0")
+            ) is None or line_elided:
                 continue
 
             # Create the line number
