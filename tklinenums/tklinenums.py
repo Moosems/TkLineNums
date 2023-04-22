@@ -67,7 +67,7 @@ class TkLineNumbers(Canvas):
         self.bind("<Button1-Leave>", self.auto_scroll, add=True)
 
         # Set the yscrollcommand of the text widget to redraw the widget
-        text["yscrollcommand"] = self.redraw
+        editor["yscrollcommand"] = self.redraw
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
