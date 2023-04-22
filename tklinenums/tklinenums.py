@@ -8,6 +8,10 @@ from tkinter.font import Font
 
 def scroll_inversion(delta: int) -> int:
     """Corrects scrolling numbers across platforms"""
+
+    # The scroll events passed by MacOS are different from Windows and Linux
+    # so it must to be rectified to work properly when dealing with the events.
+    # Originally found here: https://stackoverflow.com/a/17457843/17053202
     return -delta if system() == "Darwin" else delta / 120
 
 
