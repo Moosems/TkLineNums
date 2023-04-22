@@ -4,6 +4,7 @@ from __future__ import annotations
 from platform import system
 from tkinter import Canvas, Event, Misc, Text, getboolean
 from tkinter.font import Font
+from typing import Callable
 
 
 def scroll_inversion(delta: int) -> int:
@@ -26,10 +27,7 @@ class TkLineNumbers(Canvas):
         * -justify (str): The justification of the line numbers. Can be "left", "right", or "center". Default is "left".
 
     Methods to be used outside externally:
-        * .redraw(): Redraws the widget
-        * .resize(): Calculates the required width of the widget and resizes it
-        according to the text widget's font and the number of lines (run in redraw())
-        * .reload(): Reloads the style of the widget and redraws it.
+        * .redraw(): Redraws the widget (to be used when the text widget is modified)
     """
 
     def __init__(
@@ -37,10 +35,15 @@ class TkLineNumbers(Canvas):
         master: Misc,
         textwidget: Text,
         justify: str = "left",
+        # None means take colors from text widget (default).
+        # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
+        colors: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
         *args,
         **kwargs,
     ) -> None:
         """Initializes the widget -- Internal use only"""
+
+        # Initialize the Canvas widget
         Canvas.__init__(
             self,
             master,
@@ -52,15 +55,16 @@ class TkLineNumbers(Canvas):
             **kwargs,
         )
 
-        # Set variable
+        # Set variables
         self.textwidget = textwidget
         self.master = master
         self.justify = justify
         self.click_pos: None = None
+        self.colors = colors
 
         # Set style and its binding
-        self.set_to_ttk_style()
-        self.bind("<<ThemeChanged>>", self.set_to_ttk_style, add=True)
+        self.set_colors()
+        self.bind("<<ThemeChanged>>", self.set_colors, add=True)
 
         # Mouse scroll binding
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
@@ -85,9 +89,11 @@ class TkLineNumbers(Canvas):
 
     def redraw(self, *args) -> None:
         """Redraws the widget"""
-        # Resize the widget based on the number of lines in the textwidget
+
+        # Resize the widget based on the number of lines in the textwidget and set colors
         del args
         self.resize()
+        self.set_colors()
 
         # Delete all the old line numbers
         self.delete("all")
@@ -124,7 +130,7 @@ class TkLineNumbers(Canvas):
                 text=f" {lineno} " if self.justify != "center" else f"{lineno}",
                 anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
                 font=self.textwidget.cget("font"),
-                fill=self.foreground,
+                fill=self.foreground_color,
             )
 
     def mouse_scroll(self, event: Event) -> None:
@@ -170,6 +176,7 @@ class TkLineNumbers(Canvas):
 
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
+
         del event
         self.click_pos = None
 
@@ -185,6 +192,7 @@ class TkLineNumbers(Canvas):
     def auto_scroll(self, event: Event) -> None:
         """Automatically scrolls the text widget when the mouse is near the top or bottom,
         similar to the drag function -- Internal use only"""
+
         if self.click_pos is None:
             return
 
@@ -260,7 +268,7 @@ class TkLineNumbers(Canvas):
         self.redraw()
 
     def resize(self) -> None:
-        """Resizes the widget to fit the text widget"""
+        """Resizes the widget to fit the text widget -- Internal use only"""
 
         # Get amount of lines in the text widget
         end = self.textwidget.index("end").split(".")[0]
@@ -271,34 +279,30 @@ class TkLineNumbers(Canvas):
             end
         ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
-    def set_to_ttk_style(self) -> None:
-        """Sets the widget to the ttk style"""
+    def set_colors(self, event: Event | None = None) -> None:
+        """Sets the colors of the widget according to self.colors - Internal use only"""
 
-        # Set the background and foreground to the ttk style
-        self["bg"] = self.tk.eval("ttk::style lookup TLineNumbers -background")
-        self.foreground = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
+        # The event is irrelevant so it is deleted
+        del event
 
-    def reload(self) -> None:
-        """Reloads the widget"""
-
-        # Set the widget to the ttk style and redraw it
-        self.set_to_ttk_style()
-        self.redraw()
+        # If the color provider is None, set the foreground color to the Text widget's foreground color
+        if self.colors is None:
+            self.foreground_color = self.textwidget["fg"]
+            self["bg"] = self.textwidget["bg"]
+        elif isinstance(self.colors, tuple):
+            self.foreground_color, self["bg"] = self.colors
+        else:
+            self.foreground_color, self["bg"] = self.colors()
 
 
 if __name__ == "__main__":
     from tkinter import Tk
     from tkinter.ttk import Style
 
-    if system() == "Darwin":
-        contmand: str = "Command"
-    else:
-        contmand: str = "Control"
-
     root = Tk()
 
     style = Style()
-    style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
+    style.configure("TkLineNumbers", foreground="#2197db", background="#ffffff")
 
     text = Text(root)
     text.pack(side="right")
@@ -306,14 +310,15 @@ if __name__ == "__main__":
     for i in range(50):
         text.insert("end", f"Line {i+1}\n")
 
-    linenums = TkLineNumbers(root, text)
+    def ttk_theme_colors() -> tuple[str, str]:
+        fg: str = style.lookup("TkLineNumbers", "foreground")
+        bg: str = style.lookup("TkLineNumbers", "background")
+        return (fg, bg)
+
+    linenums = TkLineNumbers(root, text, colors=ttk_theme_colors)
     linenums.pack(fill="y", side="left", expand=True)
 
-    text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
-    text.bind("<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
-    text.bind(
-        f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True
-    )
+    text.bind("<<Modified>>", lambda event: linenums.redraw())
     text.config(font=("Courier New bold", 15))
 
     root.mainloop()
