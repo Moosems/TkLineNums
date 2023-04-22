@@ -2,14 +2,14 @@ from platform import system
 from tkinter import Text, Tk
 from tkinter.ttk import Style
 
+from tklinenums import TkLineNumbers
+
 if system() == "Darwin":
     contmand: str = "Command"
 else:
     contmand: str = "Control"
 
-from tklinenums import TkLineNumbers
-
-root = Tk()
+root: Tk = Tk()
 
 style = Style()
 style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
@@ -26,6 +26,5 @@ linenums.pack(fill="y", side="left", expand=True)
 text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
 text.bind("<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
 text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
-text["yscrollcommand"] = linenums.redraw
 
 root.mainloop()
