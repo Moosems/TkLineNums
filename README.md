@@ -15,8 +15,8 @@
 - Scrolling the linebar will scroll the text widget (and vice versa).
 - Can handle elided lines (elided lines are lines that are not visible in the text widget).
 - Supports ttk themes and allows easy color customization.
-- Supports left, right, and center alignment with the `-justify` option
-- Clicking and then dragging the mouse will scroll the text widget (see [#8](https://github.com/Moosems/TkLineNums/pull/8))
+- Supports left, right, and center alignment with the `-justify` option.
+- Clicking and then dragging the mouse will scroll the text widget (see [#8](https://github.com/Moosems/TkLineNums/pull/8)).
 
 # Installation
 
