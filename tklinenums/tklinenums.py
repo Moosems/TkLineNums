@@ -29,7 +29,6 @@ class TkLineNumbers(Canvas):
         * .redraw(): Redraws the widget
         * .resize(): Calculates the required width of the widget and resizes it
         according to the text widget's font and the number of lines (run in redraw())
-        * .set_to_ttk_style(): Sets the foreground and background colors to the ttk style of the text widget
         * .reload(): Reloads the style of the widget and redraws it.
     """
 
@@ -59,8 +58,9 @@ class TkLineNumbers(Canvas):
         self.justify = justify
         self.click_pos: None = None
 
-        # Set style
+        # Set style and its binding
         self.set_to_ttk_style()
+        self.bind("<<ThemeChanged>>", self.set_to_ttk_style, add=True)
 
         # Mouse scroll binding
         self.bind("<MouseWheel>", self.mouse_scroll, add=True)
