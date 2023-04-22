@@ -4,7 +4,6 @@ from __future__ import annotations
 from platform import system
 from tkinter import Canvas, Event, Misc, Text
 from tkinter.font import Font
-from typing import Callable
 
 
 def scroll_inversion(delta: int) -> int:
@@ -49,7 +48,7 @@ class TkLineNumbers(Canvas):
             *args,
             **kwargs,
         )
-    
+
         # Set variable
         self.textwidget = editor
         self.master = master
@@ -93,7 +92,6 @@ class TkLineNumbers(Canvas):
 
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, last_line + 1):
-
             # If the line is not visible, skip it
             if (dlineinfo := self.textwidget.dlineinfo(f"{lineno}.0")) is None:
                 continue
@@ -127,7 +125,7 @@ class TkLineNumbers(Canvas):
             self.shift_click(event)
             return
 
-        #Remove the selection tag from the text widget
+        # Remove the selection tag from the text widget
         self.textwidget.tag_remove("sel", "1.0", "end")
 
         # Set the insert position to the line number clicked
@@ -140,7 +138,9 @@ class TkLineNumbers(Canvas):
         self.textwidget.see("insert")
 
         # If the line clicked is at the edge of the screen, scroll by one line to bring it into view
-        first_visible_line, last_visible_line = int(self.textwidget.index("@0,0").split(".")[0]), int(
+        first_visible_line, last_visible_line = int(
+            self.textwidget.index("@0,0").split(".")[0]
+        ), int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
         insert = int(self.editor.index("insert").split(".")[0])
@@ -177,7 +177,7 @@ class TkLineNumbers(Canvas):
             self.editor.yview_scroll(-1, "units")
         else:
             return
-        
+
         # Select the text
         self.select_text(event=event)
 
@@ -198,7 +198,7 @@ class TkLineNumbers(Canvas):
         # If the click position is None, return
         if self.click_pos is None or event.y < 0 or event.y >= self.winfo_height():
             return
-        
+
         # Select the text
         start: str = self.editor.index("insert")
         self.select_text(start, event=event)
@@ -220,7 +220,7 @@ class TkLineNumbers(Canvas):
         else:
             end = str(float(end) + 1)
 
-        # Select the text and move the insert position to the start of the 
+        # Select the text and move the insert position to the start of the
         # line corresponding to the event position
         self.editor.tag_remove("sel", "1.0", "end")
         self.editor.tag_add("sel", start, end)
@@ -246,7 +246,9 @@ class TkLineNumbers(Canvas):
 
         # Set the width of the widget to the required width to display the biggest line number
         temp_font = self.textwidget.cget("font")
-        self.config(width=Font(font=temp_font).measure(" 1234 ")) if int(end) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
+        self.config(width=Font(font=temp_font).measure(" 1234 ")) if int(
+            end
+        ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
     def set_to_ttk_style(self) -> None:
         """Sets the widget to the ttk style"""
@@ -288,7 +290,9 @@ if __name__ == "__main__":
 
     text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
     text.bind("<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
-    text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
+    text.bind(
+        f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True
+    )
     text.config(font=("Courier New bold", 15))
 
     root.mainloop()
