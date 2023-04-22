@@ -37,7 +37,7 @@ class TkLineNumbers(Canvas):
         justify: str = "left",
         # None means take colors from text widget (default).
         # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
-        color_provider: Callable[[], tuple[str, str]] | None = None,
+        color_provider: Callable[[], tuple[str, str]] | tuple | None = None,
         *args,
         **kwargs,
     ) -> None:
@@ -279,7 +279,7 @@ class TkLineNumbers(Canvas):
             end
         ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
-    def set_colors(self, event: Event | None= None) -> None:
+    def set_colors(self, event: Event | None = None) -> None:
         """Sets the colors of the widget according to color_provider - Internal use only"""
 
         # The event is irrelevant so it is deleted
@@ -289,6 +289,8 @@ class TkLineNumbers(Canvas):
         if self.color_provider is None:
             self.foreground_color = self.textwidget["fg"]
             self["bg"] = self.textwidget["bg"]
+        elif isinstance(self.color_provider, tuple):
+            self.foreground_color, self["bg"] = self.color_provider
         else:
             self.foreground_color, self["bg"] = self.color_provider()
 
@@ -300,7 +302,7 @@ if __name__ == "__main__":
     root = Tk()
 
     style = Style()
-    style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
+    style.configure("TkLineNumbers", foreground="#2197db", background="#ffffff")
 
     text = Text(root)
     text.pack(side="right")
@@ -309,8 +311,8 @@ if __name__ == "__main__":
         text.insert("end", f"Line {i+1}\n")
 
     def ttk_theme_color_provider() -> tuple[str, str]:
-        fg: str = text.tk.eval("ttk::style lookup TLineNumbers -foreground")
-        bg: str = text.tk.eval("ttk::style lookup TLineNumbers -background")
+        fg: str = style.lookup("TkLineNumbers", "foreground")
+        bg: str = style.lookup("TkLineNumbers", "background")
         return (fg, bg)
 
     linenums = TkLineNumbers(root, text, color_provider=ttk_theme_color_provider)

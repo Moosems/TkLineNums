@@ -8,13 +8,15 @@ root = Tk()
 
 # Set the ttk style (tkinter's way of styling) for the line numbers
 style = Style()
-style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
+style.configure("TkLineNumbers", foreground="#2197db", background="#ffffff")
 
-#Create a style_provider function that returns the ttk style for the line numbers
+
+# Create a style_provider function that returns the ttk style for the line numbers
 def ttk_style_provider():
-    fg: str = style.lookup("TLineNumbers", "foreground")
-    bg: str = style.lookup("TLineNumbers", "background")
+    fg: str = style.lookup("TkLineNumbers", "foreground")
+    bg: str = style.lookup("TkLineNumbers", "background")
     return (fg, bg)
+
 
 # Create the Text widget and pack it to the right
 text = Text(root)
@@ -25,8 +27,7 @@ for i in range(50):
     text.insert("end", f"Line {i+1}\n")
 
 # Create the TkLineNumbers widget and pack it to the left
-linenums = TkLineNumbers(root, text, "right", ttk_style_provider)
-# Remember, the color_provider and justify are optional and can be left out
+linenums = TkLineNumbers(root, text, justify="center", color_provider=ttk_style_provider)
 linenums.pack(fill="y", side="left")
 
 # Redraw the line numbers when the text widget contents are modified
