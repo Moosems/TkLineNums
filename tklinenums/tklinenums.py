@@ -37,7 +37,7 @@ class TkLineNumbers(Canvas):
         justify: str = "left",
         # None means take colors from text widget (default).
         # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
-        color_provider: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
+        colors: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
         *args,
         **kwargs,
     ) -> None:
@@ -60,7 +60,7 @@ class TkLineNumbers(Canvas):
         self.master = master
         self.justify = justify
         self.click_pos: None = None
-        self.color_provider = color_provider
+        self.colors = colors
 
         # Set style and its binding
         self.set_colors()
@@ -280,19 +280,19 @@ class TkLineNumbers(Canvas):
         ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
     def set_colors(self, event: Event | None = None) -> None:
-        """Sets the colors of the widget according to color_provider - Internal use only"""
+        """Sets the colors of the widget according to self.colors - Internal use only"""
 
         # The event is irrelevant so it is deleted
         del event
 
-        # If the color provider is None, set the foreground color to the text widget's foreground color
-        if self.color_provider is None:
+        # If the color provider is None, set the foreground color to the Text widget's foreground color
+        if self.colors is None:
             self.foreground_color = self.textwidget["fg"]
             self["bg"] = self.textwidget["bg"]
-        elif isinstance(self.color_provider, tuple):
-            self.foreground_color, self["bg"] = self.color_provider
+        elif isinstance(self.colors, tuple):
+            self.foreground_color, self["bg"] = self.colors
         else:
-            self.foreground_color, self["bg"] = self.color_provider()
+            self.foreground_color, self["bg"] = self.colors()
 
 
 if __name__ == "__main__":
@@ -310,12 +310,12 @@ if __name__ == "__main__":
     for i in range(50):
         text.insert("end", f"Line {i+1}\n")
 
-    def ttk_theme_color_provider() -> tuple[str, str]:
+    def ttk_theme_colors() -> tuple[str, str]:
         fg: str = style.lookup("TkLineNumbers", "foreground")
         bg: str = style.lookup("TkLineNumbers", "background")
         return (fg, bg)
 
-    linenums = TkLineNumbers(root, text, color_provider=ttk_theme_color_provider)
+    linenums = TkLineNumbers(root, text, colors=ttk_theme_colors)
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<<Modified>>", lambda event: linenums.redraw())

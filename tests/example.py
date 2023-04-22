@@ -27,7 +27,7 @@ for i in range(50):
     text.insert("end", f"Line {i+1}\n")
 
 # Create the TkLineNumbers widget and pack it to the left
-linenums = TkLineNumbers(root, text, justify="center", color_provider=ttk_style_provider)
+linenums = TkLineNumbers(root, text, justify="center", colors=ttk_style_provider)
 linenums.pack(fill="y", side="left")
 
 # Redraw the line numbers when the text widget contents are modified
