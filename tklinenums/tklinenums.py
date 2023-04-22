@@ -119,6 +119,7 @@ class TkLineNumbers(Canvas):
 
         # Scroll the text widget and then redraw the widget
         self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
+        self.redraw()
 
     def click_see(self, event: Event) -> None:
         """When clicking on a line number it scrolls to that line if not shifting -- Internal use only"""
@@ -152,6 +153,7 @@ class TkLineNumbers(Canvas):
         elif insert == last_visible_line:
             self.textwidget.yview_scroll(scroll_inversion(1), "units")
         self.click_pos: str = self.textwidget.index("insert")
+        self.redraw()
 
     def unclick(self, event: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
@@ -165,6 +167,7 @@ class TkLineNumbers(Canvas):
         del event
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add("sel", "insert", "insert + 1 line")
+        self.redraw()
 
     def auto_scroll(self, event: Event) -> None:
         """Automatically scrolls the text widget when the mouse is near the top or bottom,
@@ -186,6 +189,7 @@ class TkLineNumbers(Canvas):
 
         # After 50ms, call this function again
         self.cancellable_after = self.after(50, self.auto_scroll, event)
+        self.redraw()
 
     def stop_auto_scroll(self, event: Event) -> None:
         """Stops the auto scroll when the cursor re-enters the line numbers -- Internal use only"""
@@ -228,6 +232,7 @@ class TkLineNumbers(Canvas):
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add("sel", start, end)
         self.textwidget.mark_set("insert", f"@{event.x},{event.y} linestart")
+        self.redraw()
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
@@ -239,6 +244,7 @@ class TkLineNumbers(Canvas):
         if self.textwidget.compare(start_pos, ">", end_pos):
             start_pos, end_pos = end_pos, start_pos
         self.textwidget.tag_add("sel", start_pos, end_pos)
+        self.redraw()
 
     def resize(self) -> None:
         """Resizes the widget to fit the text widget"""
