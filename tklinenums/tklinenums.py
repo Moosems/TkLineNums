@@ -80,6 +80,9 @@ class TkLineNumbers(Canvas):
         # Set the yscrollcommand of the text widget to redraw the widget
         textwidget["yscrollcommand"] = self.redraw
 
+        # Redraw the widget
+        self.redraw()
+
     def redraw(self, *args) -> None:
         """Redraws the widget"""
         # Resize the widget based on the number of lines in the textwidget

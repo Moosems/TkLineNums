@@ -32,17 +32,10 @@
 
 ### Basic Usage:
 ```python
-from platform import system
 from tkinter import Text, Tk
 from tkinter.ttk import Style
 
 from tklinenums import TkLineNumbers
-
-# This is to make the example work on both Windows and Mac
-if system() == "Darwin":
-    contmand: str = "Command"
-else:
-    contmand: str = "Control"
 
 # Create the root window
 root = Tk()
@@ -63,15 +56,13 @@ for i in range(50):
 linenums = TkLineNumbers(root, text)
 linenums.pack(fill="y", side="left")
 
-# Create binds to redraw the line numbers for most common events that change the text in the Text widget
-text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
-text.bind("<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
-text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
+# Redraw the line numbers when the text widget contents are modified
+text.bind("<<Modified>>", lambda event: root.after_idle(linenums.redraw), add=True)
 
 # Start the mainloop for the root window
 root.mainloop()
 ```
-For a more complete example, see the [example.py](./tests/example.py) file.
+This example can be found and run at the [example.py](./tests/example.py) file.
 
 ## How to run and contribute
 

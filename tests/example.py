@@ -1,30 +1,29 @@
-from platform import system
 from tkinter import Text, Tk
 from tkinter.ttk import Style
 
 from tklinenums import TkLineNumbers
 
-if system() == "Darwin":
-    contmand: str = "Command"
-else:
-    contmand: str = "Control"
+# Create the root window
+root = Tk()
 
-root: Tk = Tk()
-
+# Set the ttk style (tkinter's way of styling) for the line numbers
 style = Style()
 style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
 
-text = Text(root, wrap="char", font=("Courier New bold", 15))
+# Create the Text widget and pack it to the right
+text = Text(root)
 text.pack(side="right")
 
+# Insert 50 lines of text into the Text widget
 for i in range(50):
     text.insert("end", f"Line {i+1}\n")
 
+# Create the TkLineNumbers widget and pack it to the left
 linenums = TkLineNumbers(root, text)
-linenums.pack(fill="y", side="left", expand=True)
+linenums.pack(fill="y", side="left")
 
-text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
-text.bind("<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
-text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
+# Redraw the line numbers when the text widget contents are modified
+text.bind("<<Modified>>", lambda event: root.after_idle(linenums.redraw), add=True)
 
+# Start the mainloop for the root window
 root.mainloop()
