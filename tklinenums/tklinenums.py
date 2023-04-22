@@ -233,7 +233,7 @@ class TkLineNumbers(Canvas):
 
         # Set the background and foreground to the ttk style
         self["bg"] = self.tk.eval("ttk::style lookup TLineNumbers -background")
-        self["fg"] = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
+        self.foreground = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
 
     def reload(self) -> None:
         """Reloads the widget"""
