@@ -37,7 +37,9 @@ class TkLineNumbers(Canvas):
         master: Misc,
         textwidget: Text,
         justify: str = "left",
-        ttk_theme: bool = False,
+        # None means take colors from text widget (default).
+        # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
+        color_provider: Callable[[], tuple[str, str]] | None = None,
         *args,
         **kwargs,
     ) -> None:
@@ -274,26 +276,14 @@ class TkLineNumbers(Canvas):
             end
         ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
-    def set_colors(self, background: str | None = None, foreground: str | None = None, ttk_style: bool | None = None) -> None:
-        """Sets the colors of the widget"""
+    def set_colors(self, event: object = None) -> None:
+        """Sets the colors of the widget according to color_provider"""
 
-        # self.ttk_theme already holds a boolean value but if one is provided, use that
-        if ttk_style is not None:
-            self.ttk_theme = ttk_style
-
-        # If the ttk style is True, set the colors to the ttk style
-        if self.ttk_theme:
-            # Akuli: How do I know if these are being changed or if the style has a set value?
-            # I don't want to override the user's style if they have set it
-            self["bg"] = self.tk.eval("ttk::style lookup TLineNumbers -background")
-            self.foreground_color = self.tk.eval("ttk::style lookup TLineNumbers -foreground")
-            return
-
-        # If the background and foreground are not None, set them to the specified colors
-        if background is not None:
-            self["bg"] = background
-        if foreground is not None:
-            self.foreground_color = foreground
+        if self.color_provider is None:
+            self.foreground_color = self.editor["fg"]
+            self["bg"] = self.editor["bg"]
+        else:
+            self.foreground_color, self["bg"] = self.color_provider()
 
     def reload(self) -> None:
         """Reloads the widget"""
@@ -323,8 +313,7 @@ if __name__ == "__main__":
     for i in range(50):
         text.insert("end", f"Line {i+1}\n")
 
-    linenums = TkLineNumbers(root, text, ttk_theme=True)
-    linenums.set_colors(foreground="#2197db")
+    linenums = TkLineNumbers(root, text, color_provider=ttk_theme_color_provider)
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
