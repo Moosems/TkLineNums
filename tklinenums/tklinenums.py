@@ -76,10 +76,10 @@ class TkLineNumbers(Canvas):
         self.bind("<ButtonRelease-1>", self.unclick, add=True)
         self.bind("<Double-Button-1>", self.double_click, add=True)
 
-        # Drag bindings
-        self.bind("<Button1-Motion>", self.drag, add=True)
-        self.bind("<Button1-Leave>", self.auto_scroll, add=True)
-        self.bind("<Button1-Enter>", self.stop_auto_scroll, add=True)
+        # Mouse drag bindings
+        self.bind("<Button1-Motion>", self.in_widget_select_mouse_drag, add=True)
+        self.bind("<Button1-Leave>", self.mouse_off_screen_scroll, add=True)
+        self.bind("<Button1-Enter>", self.stop_mouse_off_screen_scroll, add=True)
 
         # Set the yscrollcommand of the text widget to redraw the widget
         textwidget["yscrollcommand"] = self.redraw
@@ -189,9 +189,9 @@ class TkLineNumbers(Canvas):
         self.textwidget.tag_add("sel", "insert", "insert + 1 line")
         self.redraw()
 
-    def auto_scroll(self, event: Event) -> None:
+    def mouse_off_screen_scroll(self, event: Event) -> None:
         """Automatically scrolls the text widget when the mouse is near the top or bottom,
-        similar to the drag function -- Internal use only"""
+        similar to the in_widget_select_mouse_drag function -- Internal use only"""
 
         if self.click_pos is None:
             return
@@ -209,10 +209,10 @@ class TkLineNumbers(Canvas):
         self.select_text(event=event)
 
         # After 50ms, call this function again
-        self.cancellable_after = self.after(50, self.auto_scroll, event)
+        self.cancellable_after = self.after(50, self.mouse_off_screen_scroll, event)
         self.redraw()
 
-    def stop_auto_scroll(self, event: Event) -> None:
+    def stop_mouse_off_screen_scroll(self, event: Event) -> None:
         """Stops the auto scroll when the cursor re-enters the line numbers -- Internal use only"""
 
         # If the after has not been cancelled, cancel it
@@ -220,8 +220,8 @@ class TkLineNumbers(Canvas):
             self.after_cancel(self.cancellable_after)
             self.cancellable_after: None = None
 
-    def drag(self, event: Event) -> None:
-        """When click dragging it selects the text -- Internal use only"""
+    def in_widget_select_mouse_drag(self, event: Event) -> None:
+        """When click in_widget_select_mouse_dragging it selects the text -- Internal use only"""
 
         # If the click position is None, return
         if self.click_pos is None or event.y < 0 or event.y >= self.winfo_height():
