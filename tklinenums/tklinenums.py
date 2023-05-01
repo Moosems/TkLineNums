@@ -61,6 +61,7 @@ class TkLineNumbers(Canvas):
         self.justify = justify
         self.click_pos: None = None
         self.colors = colors
+        self.cancellable_after: None | Event = None
 
         # Set style and its binding
         self.set_colors()
@@ -77,9 +78,9 @@ class TkLineNumbers(Canvas):
         self.bind("<Double-Button-1>", self.double_click, add=True)
 
         # Mouse drag bindings
-        self.bind("<Button1-Motion>", self.in_widget_select_mouse_drag, add=True)
-        self.bind("<Button1-Leave>", self.mouse_off_screen_scroll, add=True)
-        self.bind("<Button1-Enter>", self.stop_mouse_off_screen_scroll, add=True)
+        self.bind("<Button1-Motion>", self.drag, add=True)
+        self.bind("<Button1-Leave>", self.drag, add=True)
+        self.bind("<Button1-Enter>", self.stop_drag, add=True)
 
         # Set the yscrollcommand of the text widget to redraw the widget
         textwidget["yscrollcommand"] = self.redraw
@@ -189,30 +190,7 @@ class TkLineNumbers(Canvas):
         self.textwidget.tag_add("sel", "insert", "insert + 1 line")
         self.redraw()
 
-    def mouse_off_screen_scroll(self, event: Event) -> None:
-        """Automatically scrolls the text widget when the mouse is near the top or bottom,
-        similar to the in_widget_select_mouse_drag function -- Internal use only"""
-
-        if self.click_pos is None:
-            return
-
-        # Taken from the Text source: https://github.com/tcltk/tk/blob/main/library/text.tcl#L676
-        # Scrolls the widget if the cursor is off of the screen
-        if event.y >= self.winfo_height():
-            self.textwidget.yview_scroll(1, "units")
-        elif event.y < 0:
-            self.textwidget.yview_scroll(-1, "units")
-        else:
-            return
-
-        # Select the text
-        self.select_text(event=event)
-
-        # After 50ms, call this function again
-        self.cancellable_after = self.after(50, self.mouse_off_screen_scroll, event)
-        self.redraw()
-
-    def stop_mouse_off_screen_scroll(self, event: Event) -> None:
+    def stop_drag(self, event: Event) -> None:
         """Stops the auto scroll when the cursor re-enters the line numbers -- Internal use only"""
 
         # If the after has not been cancelled, cancel it
@@ -220,16 +198,36 @@ class TkLineNumbers(Canvas):
             self.after_cancel(self.cancellable_after)
             self.cancellable_after: None = None
 
-    def in_widget_select_mouse_drag(self, event: Event) -> None:
-        """When click in_widget_select_mouse_dragging it selects the text -- Internal use only"""
+    def drag(self, event: Event | None = None) -> None:
+        """When dragging the cursor, if the mouse is down, select the text -- Internal use only"""
 
-        # If the click position is None, return
-        if self.click_pos is None or event.y < 0 or event.y >= self.winfo_height():
+        # We can tell if the mouse is down by checking if the click position is None
+        if self.click_pos is None:
             return
+        
+        # If the cursor is in the line numbers, simply select the text
+        if event.y >= 0 and event.y < self.winfo_height():
+            self.select_text(event=event)
+            return
+        
+        if int(event.state) in (6, 256):
+            return
+        
+        print(int(event.state))
 
-        # Select the text
-        start: str = self.textwidget.index("insert")
-        self.select_text(start, event=event)
+        print("Out of line numbers")
+        # If the cursor is off the screen, scroll the text widget and select the text
+        # Taken from the Text source: https://www.github.com/tcltk/tk/blob/main/library/text.tcl#L676
+        if event.y >= self.winfo_height():
+            self.textwidget.yview_scroll(1, "units")
+        elif event.y < 0:
+            self.textwidget.yview_scroll(-1, "units")
+        
+        self.select_text(event=event)
+
+        # After 50ms, call this function again
+        self.cancellable_after = self.after(50, self.drag, event)
+        self.redraw()
 
     def select_text(
         self, start: str | None = None, end: str | None = None, event: Event = Event
@@ -238,7 +236,7 @@ class TkLineNumbers(Canvas):
 
         # If the start and end positions are None, set them to the click position and the cursor position
         if start is None:
-            start: str = self.textwidget.index(f"@{event.x},{event.y}")
+            start: str = self.textwidget.index(f"@0,{event.y}")
         if end is None:
             end: str = self.click_pos
 
