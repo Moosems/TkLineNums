@@ -13,6 +13,9 @@ def scroll_inversion(delta: int) -> int:
     # The scroll events passed by MacOS are different from Windows and Linux
     # so it must to be rectified to work properly when dealing with the events.
     # Originally found here: https://stackoverflow.com/a/17457843/17053202
+    if delta in (4, 5):
+        # Linux device
+        return delta/4 if delta == 4 else -delta/5
     return -delta if system() == "Darwin" else delta / 120
 
 
@@ -138,7 +141,9 @@ class TkLineNumbers(Canvas):
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
 
         # Scroll the text widget and then redraw the widget
-        self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
+        delta: int = event.delta if event.delta != 0 else event.num
+
+        self.textwidget.yview_scroll(int(scroll_inversion(delta)), "units")
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -210,11 +215,6 @@ class TkLineNumbers(Canvas):
             self.select_text(event=event)
             return
         
-        if int(event.state) in (6, 256):
-            return
-        
-        print(int(event.state))
-
         print("Out of line numbers")
         # If the cursor is off the screen, scroll the text widget and select the text
         # Taken from the Text source: https://www.github.com/tcltk/tk/blob/main/library/text.tcl#L676
