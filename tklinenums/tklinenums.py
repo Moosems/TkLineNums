@@ -208,7 +208,7 @@ class TkLineNumbers(Canvas):
             return
 
         # Select the text
-        self.select_text(event=event)
+        self.select_text(event)
 
         # After 50ms, call this function again
         self.cancellable_after = self.after(50, self.mouse_off_screen_scroll, event)
@@ -230,32 +230,22 @@ class TkLineNumbers(Canvas):
             return
 
         # Select the text
-        start: str = self.textwidget.index("insert")
-        self.select_text(start, event=event)
+        self.select_text(event)
 
     def select_text(
-        self, start: str | None = None, end: str | None = None, event: Event = Event
+        self, event: Event
     ) -> None:
         """Selects the text between the start and end positions -- Internal use only"""
 
-        # If the start and end positions are None, set them to the click position and the cursor position
-        if start is None:
-            start: str = self.textwidget.index(f"@{event.x},{event.y}")
-        if end is None:
-            end: str = self.click_pos
-
-        # If the click position is greater than the cursor position, swap them
+        start, end = self.textwidget.index("insert"), self.click_pos
         if self.textwidget.compare("insert", ">", self.click_pos):
-            start, end = end, str(float(start) + 2)
+            start, end = end, str(float(start) + 1)
         else:
             end = str(float(end) + 1)
 
-        # Select the text and move the insert position to the start of the
-        # line corresponding to the event position
         self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", start, end)
-        self.textwidget.mark_set("insert", f"@{event.x},{event.y} linestart")
-        self.redraw()
+        self.textwidget.tag_add("sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0")
+        self.textwidget.mark_set("insert", self.textwidget.index(f"@{event.x},{event.y} linestart + 1 line"))
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
