@@ -13,8 +13,8 @@ style.configure("TkLineNumbers", foreground="#2197db", background="#ffffff")
 
 # Create a style_provider function that returns the ttk style for the line numbers
 def ttk_style_provider():
-    fg: str = style.lookup("TkLineNumbers", "foreground")
-    bg: str = style.lookup("TkLineNumbers", "background")
+    fg: str = style.lookup("TkLineNumbers", "foreground", default="black")
+    bg: str = style.lookup("TkLineNumbers", "background", default="white")
     return (fg, bg)
 
 
@@ -31,7 +31,7 @@ linenums = TkLineNumbers(root, text, justify="center", colors=ttk_style_provider
 linenums.pack(fill="y", side="left")
 
 # Redraw the line numbers when the text widget contents are modified
-text.bind("<<Modified>>", lambda event: root.after_idle(linenums.redraw), add=True)
+text.bind("<<Modified>>", lambda _: root.after_idle(linenums.redraw), add=True)
 
 # Start the mainloop for the root window
 root.mainloop()

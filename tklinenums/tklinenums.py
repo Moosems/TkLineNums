@@ -6,14 +6,19 @@ from tkinter import Canvas, Event, Misc, Text, getboolean
 from tkinter.font import Font
 from typing import Callable
 
+SYSTEM = system()
 
-def scroll_inversion(delta: int) -> int:
+def scroll_fix(delta: int) -> int:
     """Corrects scrolling numbers across platforms"""
 
     # The scroll events passed by MacOS are different from Windows and Linux
     # so it must to be rectified to work properly when dealing with the events.
     # Originally found here: https://stackoverflow.com/a/17457843/17053202
-    return -delta if system() == "Darwin" else delta / 120
+    if delta in (4, 5):
+        # Linux device
+        result = delta / 4 if delta == 4 else -delta / 5
+    result = -delta if SYSTEM == "Darwin" else delta / 120
+    return int(result)
 
 
 class TkLineNumError(Exception):
@@ -87,11 +92,10 @@ class TkLineNumbers(Canvas):
         # Redraw the widget
         self.redraw()
 
-    def redraw(self, *args) -> None:
+    def redraw(self, *_) -> None:
         """Redraws the widget"""
 
         # Resize the widget based on the number of lines in the textwidget and set colors
-        del args
         self.resize()
         self.set_colors()
 
@@ -137,7 +141,7 @@ class TkLineNumbers(Canvas):
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
 
         # Scroll the text widget and then redraw the widget
-        self.textwidget.yview_scroll(int(scroll_inversion(event.delta)), "units")
+        self.textwidget.yview_scroll(int(scroll_fix(event.delta if event.delta else event.num)), "units")
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -168,23 +172,21 @@ class TkLineNumbers(Canvas):
         )
         insert = int(self.textwidget.index("insert").split(".")[0])
         if insert == first_visible_line:
-            self.textwidget.yview_scroll(scroll_inversion(-1), "units")
+            self.textwidget.yview_scroll(scroll_fix(-1), "units")
         elif insert == last_visible_line:
-            self.textwidget.yview_scroll(scroll_inversion(1), "units")
+            self.textwidget.yview_scroll(scroll_fix(1), "units")
         self.click_pos: str = self.textwidget.index("insert")
         self.redraw()
 
-    def unclick(self, event: Event) -> None:
+    def unclick(self, _: Event) -> None:
         """When the mouse button is released it removes the selection -- Internal use only"""
 
-        del event
         self.click_pos = None
 
-    def double_click(self, event: Event) -> None:
+    def double_click(self, _: Event) -> None:
         """Selects the line when double clicked -- Internal use only"""
 
         # Remove the selection tag from the text widget and select the line
-        del event
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add("sel", "insert", "insert + 1 line")
         self.redraw()
@@ -212,7 +214,7 @@ class TkLineNumbers(Canvas):
         self.cancellable_after = self.after(50, self.mouse_off_screen_scroll, event)
         self.redraw()
 
-    def stop_mouse_off_screen_scroll(self, event: Event) -> None:
+    def stop_mouse_off_screen_scroll(self, _: Event) -> None:
         """Stops the auto scroll when the cursor re-enters the line numbers -- Internal use only"""
 
         # If the after has not been cancelled, cancel it
@@ -279,11 +281,8 @@ class TkLineNumbers(Canvas):
             end
         ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
 
-    def set_colors(self, event: Event | None = None) -> None:
+    def set_colors(self, _: Event | None = None) -> None:
         """Sets the colors of the widget according to self.colors - Internal use only"""
-
-        # The event is irrelevant so it is deleted
-        del event
 
         # If the color provider is None, set the foreground color to the Text widget's foreground color
         if self.colors is None:
@@ -311,14 +310,14 @@ if __name__ == "__main__":
         text.insert("end", f"Line {i+1}\n")
 
     def ttk_theme_colors() -> tuple[str, str]:
-        fg: str = style.lookup("TkLineNumbers", "foreground")
-        bg: str = style.lookup("TkLineNumbers", "background")
+        fg: str = style.lookup("TkLineNumbers", "foreground", default="black")
+        bg: str = style.lookup("TkLineNumbers", "background", default="white")
         return (fg, bg)
 
     linenums = TkLineNumbers(root, text, colors=ttk_theme_colors)
     linenums.pack(fill="y", side="left", expand=True)
 
-    text.bind("<<Modified>>", lambda event: linenums.redraw())
+    text.bind("<<Modified>>", lambda _: linenums.redraw())
     text.config(font=("Courier New bold", 15))
 
     root.mainloop()
