@@ -1,1 +1,1 @@
-from .tklinenums import TkLineNumbers
+from .tklinenums import TkLineNumbers  # noqa: F401

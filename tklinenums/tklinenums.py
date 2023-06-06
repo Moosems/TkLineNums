@@ -8,6 +8,7 @@ from typing import Callable
 
 SYSTEM = system()
 
+
 def scroll_fix(delta: int) -> int:
     """Corrects scrolling numbers across platforms"""
 
@@ -141,7 +142,9 @@ class TkLineNumbers(Canvas):
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
 
         # Scroll the text widget and then redraw the widget
-        self.textwidget.yview_scroll(int(scroll_fix(event.delta if event.delta else event.num)), "units")
+        self.textwidget.yview_scroll(
+            int(scroll_fix(event.delta if event.delta else event.num)), "units"
+        )
         self.redraw()
 
     def click_see(self, event: Event) -> None:
@@ -232,9 +235,7 @@ class TkLineNumbers(Canvas):
         # Select the text
         self.select_text(event)
 
-    def select_text(
-        self, event: Event
-    ) -> None:
+    def select_text(self, event: Event) -> None:
         """Selects the text between the start and end positions -- Internal use only"""
 
         start, end = self.textwidget.index("insert"), self.click_pos
@@ -244,8 +245,12 @@ class TkLineNumbers(Canvas):
             end = str(float(end) + 1)
 
         self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add("sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0")
-        self.textwidget.mark_set("insert", self.textwidget.index(f"@{event.x},{event.y} linestart + 1 line"))
+        self.textwidget.tag_add(
+            "sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0"
+        )
+        self.textwidget.mark_set(
+            "insert", self.textwidget.index(f"@{event.x},{event.y} linestart + 1 line")
+        )
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
