@@ -65,6 +65,7 @@ class TkLineNumbers(Canvas):
         self.textwidget = textwidget
         self.master = master
         self.justify = justify
+        self.cancellable_after: None | Event = None
         self.click_pos: None = None
         self.colors = colors
 
@@ -86,6 +87,7 @@ class TkLineNumbers(Canvas):
         self.bind("<Button1-Motion>", self.in_widget_select_mouse_drag, add=True)
         self.bind("<Button1-Leave>", self.mouse_off_screen_scroll, add=True)
         self.bind("<Button1-Enter>", self.stop_mouse_off_screen_scroll, add=True)
+        self.bind("<Button1-Motion>", self.check_side_scroll, add=True)
 
         # Set the yscrollcommand of the text widget to redraw the widget
         textwidget["yscrollcommand"] = self.redraw
@@ -205,7 +207,7 @@ class TkLineNumbers(Canvas):
         # Scrolls the widget if the cursor is off of the screen
         if event.y >= self.winfo_height():
             self.textwidget.yview_scroll(1, "units")
-        elif event.y < 0:
+        elif event.y < (self.winfo_y() - self.winfo_height()):
             self.textwidget.yview_scroll(-1, "units")
         else:
             return
@@ -225,6 +227,29 @@ class TkLineNumbers(Canvas):
             self.after_cancel(self.cancellable_after)
             self.cancellable_after: None = None
 
+    def check_side_scroll(self, event: Event) -> None:
+        # TODO: Add debounce
+        """Detects if the mouse is off the screen to the sides (a case not covered in mouse_off_screen_scroll) -- Internal use only"""
+
+        # Determine if the mouse is off the sides of the widget
+        off_side = event.x < self.winfo_x() or event.x > self.winfo_x() + self.winfo_width()
+        if not off_side:
+            return
+
+        # Determine if its above or below the widget
+        if event.y >= self.winfo_height():
+            self.textwidget.yview_scroll(1, "units")
+        elif event.y < (self.winfo_y() - self.winfo_height()):
+            self.textwidget.yview_scroll(-1, "units")
+        else:
+            return
+        
+        # Select the text
+        self.select_text(event)
+
+        # Redraw the widget
+        self.redraw()
+
     def in_widget_select_mouse_drag(self, event: Event) -> None:
         """When click in_widget_select_mouse_dragging it selects the text -- Internal use only"""
 
@@ -234,6 +259,7 @@ class TkLineNumbers(Canvas):
 
         # Select the text
         self.select_text(event)
+        self.redraw()
 
     def select_text(self, event: Event) -> None:
         """Selects the text between the start and end positions -- Internal use only"""
@@ -243,6 +269,8 @@ class TkLineNumbers(Canvas):
             start, end = end, str(float(start) + 1)
         else:
             end = str(float(end) + 1)
+
+        print(start, end)
 
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add(
