@@ -207,7 +207,7 @@ class TkLineNumbers(Canvas):
         # Scrolls the widget if the cursor is off of the screen
         if event.y >= self.winfo_height():
             self.textwidget.yview_scroll(1, "units")
-        elif event.y < (self.winfo_y() - self.winfo_height()):
+        elif event.y < 0: # TODO: If the Text isn't at the top of the window, this breaks
             self.textwidget.yview_scroll(-1, "units")
         else:
             return
@@ -229,6 +229,7 @@ class TkLineNumbers(Canvas):
 
     def check_side_scroll(self, event: Event) -> None:
         # TODO: Add debounce
+        # TODO: Use afters for this too
         """Detects if the mouse is off the screen to the sides (a case not covered in mouse_off_screen_scroll) -- Internal use only"""
 
         # Determine if the mouse is off the sides of the widget
@@ -239,7 +240,7 @@ class TkLineNumbers(Canvas):
         # Determine if its above or below the widget
         if event.y >= self.winfo_height():
             self.textwidget.yview_scroll(1, "units")
-        elif event.y < (self.winfo_y() - self.winfo_height()):
+        elif event.y < 0:
             self.textwidget.yview_scroll(-1, "units")
         else:
             return
@@ -264,13 +265,13 @@ class TkLineNumbers(Canvas):
     def select_text(self, event: Event) -> None:
         """Selects the text between the start and end positions -- Internal use only"""
 
+        # TODO: Fix isse where, when scrolling, the first line is not selected
+
         start, end = self.textwidget.index("insert"), self.click_pos
         if self.textwidget.compare("insert", ">", self.click_pos):
             start, end = end, str(float(start) + 1)
         else:
             end = str(float(end) + 1)
-
-        print(start, end)
 
         self.textwidget.tag_remove("sel", "1.0", "end")
         self.textwidget.tag_add(
