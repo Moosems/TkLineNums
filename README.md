@@ -6,7 +6,7 @@
 ## Description
 `TkLineNums` is a simple line numbering widget for Python's `tkinter` GUI library. It is directly connects to a `Text` widget and even supports ttk themes through the set_to_ttk_style method.
 
-![img](https://github.com/Moosems/TkLineNums/raw/main/images/TkLineNumsPhoto.png)
+![img](misc/TkLineNumsPhoto.png)
 
 ## Features of the `TkLineNums` widget:
 
@@ -16,7 +16,8 @@
 - Can handle elided lines (elided lines are lines that are not visible in the text widget).
 - Supports ttk themes and allows easy color customization.
 - Supports left, right, and center alignment with the `-justify` option.
-- Clicking and then dragging the mouse will scroll the text widget (see [#8](https://github.com/Moosems/TkLineNums/pull/8)).
+- Clicking and then dragging the mouse will scroll the text widget.
+- Supports click dragging for selection.
 
 # Installation
 
@@ -61,13 +62,13 @@ text.bind("<<Modified>>", lambda event: root.after_idle(linenums.redraw), add=Tr
 # Start the mainloop for the root window
 root.mainloop()
 ```
-For a more complete example, see [example.py](./tests/example.py).
+For a more complete example, see [misc/example.py](./misc/example.py).
 
 ## How to run and contribute
 
 ### Running
 
-To run the example, run `python3 tests/example.py` in the root directory. The project uses only standard library modules, so there are no dependencies. It will create a window with a `Text` widget and a `TkLineNumbers` widget and 50 lines of text to mess around with.
+To run the example, run `python3 misc/example.py` in the root directory. The project uses only standard library modules, so there are no dependencies. It will create a window with a `Text` widget and a `TkLineNumbers` widget and 50 lines of text to mess around with.
 
 To test newer features or test code in a Pull Review, run `python3 tklinenums/tklinenums.py` in the root directory. Since the package is relatively small it doesn't have any relative imports, so you can run it directly.
 
