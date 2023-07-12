@@ -4,7 +4,7 @@ from __future__ import annotations
 from platform import system
 from tkinter import Canvas, Event, Misc, Text, getboolean
 from tkinter.font import Font
-from typing import Callable
+from typing import Callable, Optional
 
 SYSTEM = system()
 
@@ -65,9 +65,11 @@ class TkLineNumbers(Canvas):
         self.textwidget = textwidget
         self.master = master
         self.justify = justify
-        self.cancellable_after: None | Event = None
+        self.cancellable_after: Optional[str] = None
         self.click_pos: None = None
         self.colors = colors
+        self.x = None
+        self.y = None
 
         # Set style and its binding
         self.set_colors()
@@ -87,7 +89,6 @@ class TkLineNumbers(Canvas):
         self.bind("<Button1-Motion>", self.in_widget_select_mouse_drag, add=True)
         self.bind("<Button1-Leave>", self.mouse_off_screen_scroll, add=True)
         self.bind("<Button1-Enter>", self.stop_mouse_off_screen_scroll, add=True)
-        self.bind("<Button1-Motion>", self.check_side_scroll, add=True)
 
         # Set the yscrollcommand of the text widget to redraw the widget
         textwidget["yscrollcommand"] = self.redraw
@@ -160,27 +161,16 @@ class TkLineNumbers(Canvas):
         # Remove the selection tag from the text widget
         self.textwidget.tag_remove("sel", "1.0", "end")
 
+        [line, _] = self.textwidget.index(f'@{event.x},{event.y}').split('.')
+        click_pos = f"{line}.0"
+
         # Set the insert position to the line number clicked
-        self.textwidget.mark_set(
-            "insert",
-            f"{self.textwidget.index(f'@{event.x},{event.y}').split('.')[0]}.0",
-        )
+        self.textwidget.mark_set("insert", click_pos)
 
         # Scroll to the location of the insert position
         self.textwidget.see("insert")
 
-        # If the line clicked is at the edge of the screen, scroll by one line to bring it into view
-        first_visible_line, last_visible_line = int(
-            self.textwidget.index("@0,0").split(".")[0]
-        ), int(
-            self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
-        )
-        insert = int(self.textwidget.index("insert").split(".")[0])
-        if insert == first_visible_line:
-            self.textwidget.yview_scroll(scroll_fix(-1), "units")
-        elif insert == last_visible_line:
-            self.textwidget.yview_scroll(scroll_fix(1), "units")
-        self.click_pos: str = self.textwidget.index("insert")
+        self.click_pos: str = click_pos
         self.redraw()
 
     def unclick(self, _: Event) -> None:
@@ -200,23 +190,32 @@ class TkLineNumbers(Canvas):
         """Automatically scrolls the text widget when the mouse is near the top or bottom,
         similar to the in_widget_select_mouse_drag function -- Internal use only"""
 
+        self.x = event.x
+        self.y = event.y
+        self.text_auto_scan(event)
+
+    def text_auto_scan(self, event):
         if self.click_pos is None:
             return
 
         # Taken from the Text source: https://github.com/tcltk/tk/blob/main/library/text.tcl#L676
         # Scrolls the widget if the cursor is off of the screen
-        if event.y >= self.winfo_height():
-            self.textwidget.yview_scroll(1, "units")
-        elif event.y < 0: # TODO: If the Text isn't at the top of the window, this breaks
-            self.textwidget.yview_scroll(-1, "units")
+        if self.y >= self.winfo_height():
+            self.textwidget.yview_scroll(1 + self.y - self.winfo_height(), "pixels")
+        elif self.y < 0:
+            self.textwidget.yview_scroll(-1 + self.y, "pixels")
+        elif self.x >= self.winfo_width():
+            self.textwidget.xview_scroll(2, "units")
+        elif self.x < 0:
+            self.textwidget.xview_scroll(-2, "units")
         else:
             return
 
         # Select the text
-        self.select_text(event)
+        self.select_text(self.x - self.winfo_width(), self.y)
 
         # After 50ms, call this function again
-        self.cancellable_after = self.after(50, self.mouse_off_screen_scroll, event)
+        self.cancellable_after = self.after(50, self.text_auto_scan, event)
         self.redraw()
 
     def stop_mouse_off_screen_scroll(self, _: Event) -> None:
@@ -246,7 +245,7 @@ class TkLineNumbers(Canvas):
             return
         
         # Select the text
-        self.select_text(event)
+        self.select_text(event.x - self.winfo_width(), event.y)
 
         # Redraw the widget
         self.redraw()
@@ -255,31 +254,30 @@ class TkLineNumbers(Canvas):
         """When click in_widget_select_mouse_dragging it selects the text -- Internal use only"""
 
         # If the click position is None, return
-        if self.click_pos is None or event.y < 0 or event.y >= self.winfo_height():
+        if self.click_pos is None:
             return
 
+        self.x = event.x
+        self.y = event.y
+
         # Select the text
-        self.select_text(event)
+        self.select_text(event.x - self.winfo_width(), event.y)
         self.redraw()
 
-    def select_text(self, event: Event) -> None:
+    def select_text(self, x, y) -> None:
         """Selects the text between the start and end positions -- Internal use only"""
 
-        # TODO: Fix isse where, when scrolling, the first line is not selected
-
-        start, end = self.textwidget.index("insert"), self.click_pos
-        if self.textwidget.compare("insert", ">", self.click_pos):
-            start, end = end, str(float(start) + 1)
+        drag_pos = self.textwidget.index(f"@{x}, {y}")
+        if self.textwidget.compare(drag_pos, ">", self.click_pos):
+            start = self.click_pos
+            end = drag_pos
         else:
-            end = str(float(end) + 1)
+            start = drag_pos
+            end = self.click_pos
 
         self.textwidget.tag_remove("sel", "1.0", "end")
-        self.textwidget.tag_add(
-            "sel", start.split(".")[0] + ".0", end.split(".")[0] + ".0"
-        )
-        self.textwidget.mark_set(
-            "insert", self.textwidget.index(f"@{event.x},{event.y} linestart + 1 line")
-        )
+        self.textwidget.tag_add("sel", start, end)
+        self.textwidget.mark_set("insert", drag_pos)
 
     def shift_click(self, event: Event) -> None:
         """When shift clicking it selects the text between the click and the cursor -- Internal use only"""
