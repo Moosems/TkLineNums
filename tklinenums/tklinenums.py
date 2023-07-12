@@ -65,11 +65,11 @@ class TkLineNumbers(Canvas):
         self.textwidget = textwidget
         self.master = master
         self.justify = justify
+        self.colors = colors
         self.cancellable_after: Optional[str] = None
         self.click_pos: None = None
-        self.colors = colors
-        self.x = None
-        self.y = None
+        self.x: int | None = None
+        self.y: int | None = None
 
         # Set style and its binding
         self.set_colors()
@@ -107,24 +107,26 @@ class TkLineNumbers(Canvas):
         self.delete("all")
 
         # Get the first and last line numbers for the textwidget (all other lines are in between)
-        first_line, last_line = int(self.textwidget.index("@0,0").split(".")[0]), int(
+        first_line = int(self.textwidget.index("@0,0").split(".")[0])
+        last_line = int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
 
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, last_line + 1):
             # Check if line is elided
-            tags: list = self.textwidget.tag_names(f"{lineno}.0")
-            elide_values: tuple = (
+            tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
+            elide_values: tuple[str] = (
                 self.textwidget.tag_cget(tag, "elide") for tag in tags
             )
             # elide values can be empty
             line_elided: bool = any(getboolean(v or "false") for v in elide_values)
 
             # If the line is not visible, skip it
-            if (
-                dlineinfo := self.textwidget.dlineinfo(f"{lineno}.0")
-            ) is None or line_elided:
+            dlineinfo: tuple[
+                int, int, int, int, int
+            ] | None = self.textwidget.dlineinfo(f"{lineno}.0")
+            if dlineinfo is None or line_elided:
                 continue
 
             # Create the line number
@@ -161,7 +163,7 @@ class TkLineNumbers(Canvas):
         # Remove the selection tag from the text widget
         self.textwidget.tag_remove("sel", "1.0", "end")
 
-        [line, _] = self.textwidget.index(f"@{event.x},{event.y}").split(".")
+        line: str = self.textwidget.index(f"@{event.x},{event.y}").split(".")[0]
         click_pos = f"{line}.0"
 
         # Set the insert position to the line number clicked
@@ -224,7 +226,7 @@ class TkLineNumbers(Canvas):
         # If the after has not been cancelled, cancel it
         if self.cancellable_after is not None:
             self.after_cancel(self.cancellable_after)
-            self.cancellable_after: None = None
+            self.cancellable_after = None
 
     def check_side_scroll(self, event: Event) -> None:
         """Detects if the mouse is off the screen to the sides \
@@ -296,25 +298,27 @@ class TkLineNumbers(Canvas):
         """Resizes the widget to fit the text widget -- Internal use only"""
 
         # Get amount of lines in the text widget
-        end = self.textwidget.index("end").split(".")[0]
+        end: str = self.textwidget.index("end").split(".")[0]
 
         # Set the width of the widget to the required width to display the biggest line number
-        temp_font = self.textwidget.cget("font")
-        self.config(width=Font(font=temp_font).measure(" 1234 ")) if int(
-            end
-        ) <= 1000 else self.config(width=temp_font.measure(f" {end} "))
+        temp_font = Font(font=self.textwidget.cget("font"))
+        measure_str = " 1234 " if int(end) <= 1000 else f" {end} "
+        self.config(width=temp_font.measure(measure_str))
 
     def set_colors(self, _: Event | None = None) -> None:
         """Sets the colors of the widget according to self.colors - Internal use only"""
 
         # If the color provider is None, set the foreground color to the Text widget's foreground color
         if self.colors is None:
-            self.foreground_color = self.textwidget["fg"]
-            self["bg"] = self.textwidget["bg"]
+            self.foreground_color: str = self.textwidget["fg"]
+            self["bg"]: str = self.textwidget["bg"]
         elif isinstance(self.colors, tuple):
-            self.foreground_color, self["bg"] = self.colors
+            self.foreground_color: str = self.colors[0]
+            self["bg"]: str = self.colors[1]
         else:
-            self.foreground_color, self["bg"] = self.colors()
+            returned_colors: tuple[str, str] = self.colors()
+            self.foreground_color: str = returned_colors[0]
+            self["bg"]: str = returned_colors[1]
 
 
 if __name__ == "__main__":
