@@ -1,34 +1,37 @@
-from platform import system
 from tkinter import Text, Tk
-from tkinter.font import Font
 from tkinter.ttk import Style
 
 from tklinenums import TkLineNumbers
 
-if system() == "Darwin":
-    contmand: str = "Command"
-else:
-    contmand: str = "Control"
+# Create the root window
+root = Tk()
 
-root: Tk = Tk()
+# Set the ttk style (tkinter's way of styling) for the line numbers
+style = Style()
+style.configure("TkLineNumbers", foreground="#2197db", background="#ffffff")
 
-style: Style = Style()
-style.configure("TLineNumbers", background="#ffffff", foreground="#2197db")
 
-font: Font = Font(family="Courier New bold", size=15, name="TkLineNumsFont")
+# Create a style_provider function that returns the ttk style for the line numbers
+def ttk_style_provider():
+    fg: str = style.lookup("TkLineNumbers", "foreground", default="black")
+    bg: str = style.lookup("TkLineNumbers", "background", default="white")
+    return (fg, bg)
 
-text: Text = Text(root, wrap="char", font=font)
+
+# Create the Text widget and pack it to the right
+text = Text(root)
 text.pack(side="right")
 
+# Insert 50 lines of text into the Text widget
 for i in range(50):
     text.insert("end", f"Line {i+1}\n")
 
-linenums: TkLineNumbers = TkLineNumbers(root, text, font, justify="left")
-linenums.pack(fill="y", side="left", expand=True)
-linenums.reload(font)
+# Create the TkLineNumbers widget and pack it to the left
+linenums = TkLineNumbers(root, text, justify="center", colors=ttk_style_provider)
+linenums.pack(fill="y", side="left")
 
-text.bind("<Key>", lambda event: root.after_idle(linenums.redraw), add=True)
-text.bind(f"<BackSpace>", lambda event: root.after_idle(linenums.redraw), add=True)
-text.bind(f"<{contmand}-v>", lambda event: root.after_idle(linenums.redraw), add=True)
+# Redraw the line numbers when the text widget contents are modified
+text.bind("<<Modified>>", lambda _: root.after_idle(linenums.redraw), add=True)
 
+# Start the mainloop for the root window
 root.mainloop()
