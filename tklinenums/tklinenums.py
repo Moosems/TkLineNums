@@ -161,7 +161,7 @@ class TkLineNumbers(Canvas):
         # Remove the selection tag from the text widget
         self.textwidget.tag_remove("sel", "1.0", "end")
 
-        [line, _] = self.textwidget.index(f'@{event.x},{event.y}').split('.')
+        [line, _] = self.textwidget.index(f"@{event.x},{event.y}").split(".")
         click_pos = f"{line}.0"
 
         # Set the insert position to the line number clicked
@@ -227,12 +227,13 @@ class TkLineNumbers(Canvas):
             self.cancellable_after: None = None
 
     def check_side_scroll(self, event: Event) -> None:
-        # TODO: Add debounce
-        # TODO: Use afters for this too
-        """Detects if the mouse is off the screen to the sides (a case not covered in mouse_off_screen_scroll) -- Internal use only"""
+        """Detects if the mouse is off the screen to the sides \
+(a case not covered in mouse_off_screen_scroll) -- Internal use only"""
 
         # Determine if the mouse is off the sides of the widget
-        off_side = event.x < self.winfo_x() or event.x > self.winfo_x() + self.winfo_width()
+        off_side = (
+            event.x < self.winfo_x() or event.x > self.winfo_x() + self.winfo_width()
+        )
         if not off_side:
             return
 
@@ -243,7 +244,7 @@ class TkLineNumbers(Canvas):
             self.textwidget.yview_scroll(-1, "units")
         else:
             return
-        
+
         # Select the text
         self.select_text(event.x - self.winfo_width(), event.y)
 
