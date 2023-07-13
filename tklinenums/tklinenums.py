@@ -18,7 +18,11 @@ def scroll_fix(delta: int) -> int:
     if delta in (4, 5):
         # Linux device
         result = delta / 4 if delta == 4 else -delta / 5
-    result = -delta if SYSTEM == "Darwin" else delta / 120
+
+    if SYSTEM ==  "Windows":
+        result = -(delta / 120) # Must div 120 here, otherwise it will be too fast
+    else: 
+        result = -delta if SYSTEM == "Darwin" else delta / 120
     return int(result)
 
 
