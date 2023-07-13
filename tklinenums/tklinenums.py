@@ -15,11 +15,9 @@ def scroll_fix(delta: int) -> int:
     # The scroll events passed by macOS are different from Windows and Linux
     # so it must to be rectified to work properly when dealing with the events.
     # Originally found here: https://stackoverflow.com/a/17457843/17053202
-    if delta in (4, 5):
-        # X11 (maybe macOS with X11 too)
+    if delta in (4, 5):  # X11 (maybe macOS with X11 too)
         return 1 if delta == 4 else -1
-    elif SYSTEM == "Darwin":
-        # macOS
+    elif SYSTEM == "Darwin":  # macOS
         return -delta
     # Windows, needs to be divided by 120
     return -(delta // 120)
