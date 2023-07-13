@@ -17,7 +17,8 @@ def scroll_fix(delta: int) -> int:
     # Originally found here: https://stackoverflow.com/a/17457843/17053202
     if delta in (4, 5):  # X11 (maybe macOS with X11 too)
         return 1 if delta == 4 else -1
-    elif SYSTEM == "Darwin":  # macOS
+    
+    if SYSTEM == "Darwin":  # macOS
         return -delta
 
     # Windows, needs to be divided by 120
