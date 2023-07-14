@@ -12,14 +12,17 @@ SYSTEM = system()
 def scroll_fix(delta: int) -> int:
     """Corrects scrolling numbers across platforms"""
 
-    # The scroll events passed by MacOS are different from Windows and Linux
+    # The scroll events passed by macOS are different from Windows and Linux
     # so it must to be rectified to work properly when dealing with the events.
     # Originally found here: https://stackoverflow.com/a/17457843/17053202
-    if delta in (4, 5):
-        # Linux device
-        result = delta / 4 if delta == 4 else -delta / 5
-    result = -delta if SYSTEM == "Darwin" else delta / 120
-    return int(result)
+    if delta in (4, 5):  # X11 (maybe macOS with X11 too)
+        return 1 if delta == 4 else -1
+    
+    if SYSTEM == "Darwin":  # macOS
+        return -delta
+
+    # Windows, needs to be divided by 120
+    return -(delta // 120)
 
 
 class TkLineNumError(Exception):
