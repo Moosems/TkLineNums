@@ -9,15 +9,15 @@ from typing import Callable, Optional
 SYSTEM = system()
 
 
-def scroll_fix(delta: int) -> int:
+def scroll_fix(delta: int, num: bool = False) -> int:
     """Corrects scrolling numbers across platforms"""
 
     # The scroll events passed by macOS are different from Windows and Linux
     # so it must to be rectified to work properly when dealing with the events.
     # Originally found here: https://stackoverflow.com/a/17457843/17053202
-    if delta in (4, 5):  # X11 (maybe macOS with X11 too)
+    if delta in (4, 5) and num:  # X11 (maybe macOS with X11 too)
         return 1 if delta == 4 else -1
-    
+
     if SYSTEM == "Darwin":  # macOS
         return -delta
 
@@ -151,7 +151,13 @@ class TkLineNumbers(Canvas):
 
         # Scroll the text widget and then redraw the widget
         self.textwidget.yview_scroll(
-            int(scroll_fix(event.delta if event.delta else event.num)), "units"
+            int(
+                scroll_fix(
+                    event.delta if event.delta else event.num,
+                    True if event.num != "??" else False,
+                )
+            ),
+            "units",
         )
         self.redraw()
 
