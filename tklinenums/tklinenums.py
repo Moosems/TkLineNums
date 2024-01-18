@@ -138,13 +138,10 @@ class TkLineNumbers(Canvas):
 
             # if the last line is greater than max_visible_lines, you won't need a tilde char
             if int(last_line) < max_lines:
-                
             # If user send a tilde parameter, the loop range will change to the max visible lines in widget
             # Else, loop range will be last_line + 1 (default)
                 _range = last_line + max_lines + 1 if self.tilde is not None else last_line + 1
         
-        
-
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, _range):
             # Check if line is elided
@@ -159,22 +156,37 @@ class TkLineNumbers(Canvas):
             dlineinfo: tuple[
                 int, int, int, int, int
             ] | None = self.textwidget.dlineinfo(f"{lineno}.0")
-            if dlineinfo is None or line_elided:
-                # Creates the tilde character
-                self.create_text(
-                    0
-                    if self.justify == "left"
-                    else int(self["width"])
-                    if self.justify == "right"
-                    else int(self["width"]) / 2,
-                    (lineno - 1) * _font.metrics()["linespace"],
-                    text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
-                    anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
-                    font=self.textwidget.cget("font"),
-                    fill=self.foreground_color,
-                )
-                continue
 
+            if line_elided or dlineinfo is None:
+                
+                # Only create tilde char if the current line is less than max_lines
+                if lineno < max_lines:
+                # Creates the tilde character
+                    
+                    # Here, we need to create the tilde char ONLY if the current line number is not " " because of a wrapped line,
+                    # but if it is " " because there is no existent line
+
+                    # example: 
+                    #            |
+                    # 1 Hell-    |
+                    #   o world  | <- must NOT have a tilde char (~) in this case
+                    # ~          | <- must have a tilde char
+
+                    # but I don't know how to check if the current line is a wrapped line 
+
+                    self.create_text(
+                        0
+                        if self.justify == "left"
+                        else int(self["width"])
+                        if self.justify == "right"
+                        else int(self["width"]) / 2,
+                        (lineno - 1) * _font.metrics()["linespace"],
+                        text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
+                        anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
+                        font=self.textwidget.cget("font"),
+                        fill=self.foreground_color,
+                    )
+                continue
             # Create the line number
             self.create_text(
                 0
