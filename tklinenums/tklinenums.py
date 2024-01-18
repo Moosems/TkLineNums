@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from platform import system
 from tkinter import Canvas, Event, Misc, Text, getboolean
-from tkinter.font import Font
+from tkinter.font import Font, nametofont
 from typing import Callable, Optional
 
 SYSTEM = system()
@@ -124,8 +124,14 @@ class TkLineNumbers(Canvas):
         # This is not recommended, since font should be a instance of Font class of Tkinter or Customtkinter
         # But, because projects that use TkLineNums probably use str type fonts, this fix the situation
         if type(self.textwidget.cget("font")) == str:
-            cur_font = self.textwidget.cget("font").split(" ")
-            _font = Font(family=cur_font[0], size=cur_font[1])
+            cur_font = self.textwidget.cget("font")
+            print(cur_font)
+            if cur_font == "TkFixedFont":
+                _font = nametofont("TkFixedFont")
+            else:
+                cur_font = cur_font.split("} ")
+                cur_font[0] = cur_font[0].replace("{", "")
+                _font = Font(family=cur_font[0], size=cur_font[1])
         
         # If textwidget font is not str (recommended, since it should be a Font instance of Tkinter or Customtkinter)
         else:
@@ -405,7 +411,7 @@ if __name__ == "__main__":
         bg: str = style.lookup("TkLineNumbers", "background", default="white")
         return (fg, bg)
 
-    linenums = TkLineNumbers(root, text, colors=ttk_theme_colors)
+    linenums = TkLineNumbers(root, text, colors=ttk_theme_colors, tilde="~")
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<<Modified>>", lambda _: linenums.redraw())
