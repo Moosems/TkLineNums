@@ -47,6 +47,7 @@ class TkLineNumbers(Canvas):
         # None means take colors from text widget (default).
         # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
         colors: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
+        tilde: str | None = None,
         *args,
         **kwargs,
     ) -> None:
@@ -73,6 +74,7 @@ class TkLineNumbers(Canvas):
         self.click_pos: None = None
         self.x: int | None = None
         self.y: int | None = None
+        self.tilde = tilde
 
         # Set style and its binding
         self.set_colors()
@@ -114,9 +116,21 @@ class TkLineNumbers(Canvas):
         last_line = int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
+        
+        # Get the max amount of lines that can fit in the textwidget
+        max_lines = self.textwidget.winfo_height() // self.textwidget.cget("font").metrics()["linespace"]
+        
+        # Set the default loop range
+        _range = last_line + 1
+        
+        # if the last line is greater than max_visible_lines, you won't need a tilde char
+        if int(last_line) < max_lines:
+        # If user send a tilde parameter, the loop range will change to the max visible lines in widget
+        # Else, loop range will be last_line + 1 (default)
+            _range = last_line + max_lines + 1 if self.tilde is not None else last_line + 1
 
         # Draw the line numbers looping through the lines
-        for lineno in range(first_line, last_line + 1):
+        for lineno in range(first_line, _range):
             # Check if line is elided
             tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
             elide_values: tuple[str] = (
@@ -130,8 +144,21 @@ class TkLineNumbers(Canvas):
                 int, int, int, int, int
             ] | None = self.textwidget.dlineinfo(f"{lineno}.0")
             if dlineinfo is None or line_elided:
+                # Creates the tilde character
+                self.create_text(
+                    0
+                    if self.justify == "left"
+                    else int(self["width"])
+                    if self.justify == "right"
+                    else int(self["width"]) / 2,
+                    (lineno - 1) * self.textwidget.cget("font").metrics()["linespace"],
+                    text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
+                    anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
+                    font=self.textwidget.cget("font"),
+                    fill=self.foreground_color,
+                )
                 continue
-
+            
             # Create the line number
             self.create_text(
                 0
@@ -354,6 +381,6 @@ if __name__ == "__main__":
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<<Modified>>", lambda _: linenums.redraw())
-    text.config(font=("Courier New bold", 15))
+    text.config(font=("Courier New bold", 300))
 
     root.mainloop()
