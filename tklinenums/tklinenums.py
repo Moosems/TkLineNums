@@ -120,12 +120,25 @@ class TkLineNumbers(Canvas):
         # Set the default loop range
         _range = last_line + 1
 
+        # This runs if user is using a str as font. Example: "monospace 11"
+        # This is not recommended, since font should be a instance of Font class of Tkinter or Customtkinter
+        # But, because projects that use TkLineNums probably use str type fonts, this fix the situation
+        if type(self.textwidget.cget("font")) == str:
+            cur_font = self.textwidget.cget("font").split(" ")
+            _font = Font(family=cur_font[0], size=cur_font[1])
+        
+        # If textwidget font is not str (recommended, since it should be a Font instance of Tkinter or Customtkinter)
+        else:
+            _font = self.textwidget.cget("font")
+            
         # Only calculate max_lines if user send a tilde char, for optimization reasons
         if self.tilde is not None:
             # Get the max amount of lines that can fit in the textwidget
-            max_lines = self.textwidget.winfo_height() // self.textwidget.cget("font").metrics()["linespace"]
+            max_lines = self.textwidget.winfo_height() // _font.metrics()["linespace"]
+
             # if the last line is greater than max_visible_lines, you won't need a tilde char
             if int(last_line) < max_lines:
+                
             # If user send a tilde parameter, the loop range will change to the max visible lines in widget
             # Else, loop range will be last_line + 1 (default)
                 _range = last_line + max_lines + 1 if self.tilde is not None else last_line + 1
@@ -154,7 +167,7 @@ class TkLineNumbers(Canvas):
                     else int(self["width"])
                     if self.justify == "right"
                     else int(self["width"]) / 2,
-                    (lineno - 1) * self.textwidget.cget("font").metrics()["linespace"],
+                    (lineno - 1) * _font.metrics()["linespace"],
                     text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
                     anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
                     font=self.textwidget.cget("font"),
