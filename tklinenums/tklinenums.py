@@ -70,11 +70,11 @@ class TkLineNumbers(Canvas):
         self.master = master
         self.justify = justify
         self.colors = colors
+        self.tilde = tilde
         self.cancellable_after: Optional[str] = None
         self.click_pos: None = None
         self.x: int | None = None
         self.y: int | None = None
-        self.tilde = tilde
 
         # Set style and its binding
         self.set_colors()
@@ -158,7 +158,7 @@ class TkLineNumbers(Canvas):
                     fill=self.foreground_color,
                 )
                 continue
-            
+
             # Create the line number
             self.create_text(
                 0
@@ -381,6 +381,6 @@ if __name__ == "__main__":
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<<Modified>>", lambda _: linenums.redraw())
-    text.config(font=("Courier New bold", 300))
+    text.config(font=("Courier New bold", 15))
 
     root.mainloop()
