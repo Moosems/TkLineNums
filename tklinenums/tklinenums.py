@@ -117,17 +117,20 @@ class TkLineNumbers(Canvas):
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
         
-        # Get the max amount of lines that can fit in the textwidget
-        max_lines = self.textwidget.winfo_height() // self.textwidget.cget("font").metrics()["linespace"]
-        
         # Set the default loop range
         _range = last_line + 1
+
+        # Only calculate max_lines if user send a tilde char, for optimization reasons
+        if self.tilde is not None:
+            # Get the max amount of lines that can fit in the textwidget
+            max_lines = self.textwidget.winfo_height() // self.textwidget.cget("font").metrics()["linespace"]
+            # if the last line is greater than max_visible_lines, you won't need a tilde char
+            if int(last_line) < max_lines:
+            # If user send a tilde parameter, the loop range will change to the max visible lines in widget
+            # Else, loop range will be last_line + 1 (default)
+                _range = last_line + max_lines + 1 if self.tilde is not None else last_line + 1
         
-        # if the last line is greater than max_visible_lines, you won't need a tilde char
-        if int(last_line) < max_lines:
-        # If user send a tilde parameter, the loop range will change to the max visible lines in widget
-        # Else, loop range will be last_line + 1 (default)
-            _range = last_line + max_lines + 1 if self.tilde is not None else last_line + 1
+        
 
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, _range):
