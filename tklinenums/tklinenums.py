@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from platform import system
 from tkinter import Canvas, Event, Misc, Text, getboolean
-from tkinter.font import Font
+from tkinter.font import Font, nametofont
 from typing import Callable, Optional
 
 SYSTEM = system()
@@ -47,6 +47,7 @@ class TkLineNumbers(Canvas):
         # None means take colors from text widget (default).
         # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
         colors: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
+        tilde: str | None = None,
         *args,
         **kwargs,
     ) -> None:
@@ -69,6 +70,7 @@ class TkLineNumbers(Canvas):
         self.master = master
         self.justify = justify
         self.colors = colors
+        self.tilde = tilde
         self.cancellable_after: Optional[str] = None
         self.click_pos: None = None
         self.x: int | None = None
@@ -114,9 +116,40 @@ class TkLineNumbers(Canvas):
         last_line = int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
+        
+        # Set the default loop range
+        _range = last_line + 1
 
+        # This runs if user is using a str as font. Example: "monospace 11"
+        # This is not recommended, since font should be a instance of Font class of Tkinter or Customtkinter
+        # But, because projects that use TkLineNums probably use str type fonts, this fix the situation
+        if type(self.textwidget.cget("font")) == str:
+            cur_font = self.textwidget.cget("font")
+            print(cur_font)
+            if cur_font == "TkFixedFont":
+                _font = nametofont("TkFixedFont")
+            else:
+                cur_font = cur_font.split("} ")
+                cur_font[0] = cur_font[0].replace("{", "")
+                _font = Font(family=cur_font[0], size=cur_font[1])
+        
+        # If textwidget font is not str (recommended, since it should be a Font instance of Tkinter or Customtkinter)
+        else:
+            _font = self.textwidget.cget("font")
+            
+        # Only calculate max_lines if user send a tilde char, for optimization reasons
+        if self.tilde is not None:
+            # Get the max amount of lines that can fit in the textwidget
+            max_lines = self.textwidget.winfo_height() // _font.metrics()["linespace"]
+
+            # if the last line is greater than max_visible_lines, you won't need a tilde char
+            if int(last_line) < max_lines:
+            # If user send a tilde parameter, the loop range will change to the max visible lines in widget
+            # Else, loop range will be last_line + 1 (default)
+                _range = last_line + max_lines + 1 if self.tilde is not None else last_line + 1
+        
         # Draw the line numbers looping through the lines
-        for lineno in range(first_line, last_line + 1):
+        for lineno in range(first_line, _range):
             # Check if line is elided
             tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
             elide_values: tuple[str] = (
@@ -129,9 +162,37 @@ class TkLineNumbers(Canvas):
             dlineinfo: tuple[
                 int, int, int, int, int
             ] | None = self.textwidget.dlineinfo(f"{lineno}.0")
-            if dlineinfo is None or line_elided:
-                continue
 
+            if line_elided or dlineinfo is None:
+                
+                # Only create tilde char if the current line is less than max_lines
+                if lineno < max_lines:
+                # Creates the tilde character
+                    
+                    # Here, we need to create the tilde char ONLY if the current line number is not " " because of a wrapped line,
+                    # but if it is " " because there is no existent line
+
+                    # example: 
+                    #            |
+                    # 1 Hell-    |
+                    #   o world  | <- must NOT have a tilde char (~) in this case
+                    # ~          | <- must have a tilde char
+
+                    # but I don't know how to check if the current line is a wrapped line 
+
+                    self.create_text(
+                        0
+                        if self.justify == "left"
+                        else int(self["width"])
+                        if self.justify == "right"
+                        else int(self["width"]) / 2,
+                        (lineno - 1) * _font.metrics()["linespace"],
+                        text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
+                        anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
+                        font=self.textwidget.cget("font"),
+                        fill=self.foreground_color,
+                    )
+                continue
             # Create the line number
             self.create_text(
                 0
@@ -350,7 +411,7 @@ if __name__ == "__main__":
         bg: str = style.lookup("TkLineNumbers", "background", default="white")
         return (fg, bg)
 
-    linenums = TkLineNumbers(root, text, colors=ttk_theme_colors)
+    linenums = TkLineNumbers(root, text, colors=ttk_theme_colors, tilde="~")
     linenums.pack(fill="y", side="left", expand=True)
 
     text.bind("<<Modified>>", lambda _: linenums.redraw())
