@@ -6,6 +6,9 @@ from tkinter import Canvas, Event, Misc, Text, getboolean
 from tkinter.font import Font
 from typing import Callable, Optional
 
+from customtkinter import CTkFont
+
+
 SYSTEM = system()
 
 
@@ -120,16 +123,25 @@ class TkLineNumbers(Canvas):
         # Set the default loop range
         _range = last_line + 1
 
-        # This runs if user is using a str as font. Example: "monospace 11"
-        # This is not recommended, since font should be a instance of Font class of Tkinter or Customtkinter
-        # But, because projects that use TkLineNums probably use str type fonts, this fix the situation
-        if type(self.textwidget.cget("font")) == str:
-            cur_font = self.textwidget.cget("font").split(" ")
+        widget_font = self.textwidget.cget("font")
+
+        # If tkinter default font is in use
+        if widget_font == "TkFixedFont":
+            _font = CTkFont(family="TkFixedFont", size=11)
+
+        # If user is using tkinter
+        elif type(widget_font) == str:
+            cur_font = widget_font.split(" ")
             _font = Font(family=cur_font[0], size=cur_font[1])
+
+        # If user is using customtkinter        
+        # In customtkinter, fonts only accept tuples and CTkFont instance
+        elif type(widget_font) == tuple:
+            _font = CTkFont(family=widget_font[0], size=widget_font[1])
         
-        # If textwidget font is not str (recommended, since it should be a Font instance of Tkinter or Customtkinter)
         else:
-            _font = self.textwidget.cget("font")
+            _font = widget_font
+        
             
         # Only calculate max_lines if user send a tilde char, for optimization reasons
         if self.tilde is not None:
@@ -386,29 +398,65 @@ class TkLineNumbers(Canvas):
 
 
 if __name__ == "__main__":
-    from tkinter import Tk
-    from tkinter.ttk import Style
+    option = "tk"
 
-    root = Tk()
+    if option == "tk":
+        from tkinter import Tk
+        from tkinter.ttk import Style
 
-    style = Style()
-    style.configure("TkLineNumbers", foreground="#2197db", background="#ffffff")
+        root = Tk()
 
-    text = Text(root)
-    text.pack(side="right")
+        style = Style()
+        style.configure("TkLineNumbers", foreground="#2197db", background="#ffffff")
 
-    for i in range(50):
-        text.insert("end", f"Line {i+1}\n")
+        text = Text(root)
+        text.pack(side="right")
 
-    def ttk_theme_colors() -> tuple[str, str]:
-        fg: str = style.lookup("TkLineNumbers", "foreground", default="black")
-        bg: str = style.lookup("TkLineNumbers", "background", default="white")
-        return (fg, bg)
+        for i in range(50):
+            text.insert("end", f"Line {i+1}\n")
 
-    linenums = TkLineNumbers(root, text, colors=ttk_theme_colors)
-    linenums.pack(fill="y", side="left", expand=True)
+        def ttk_theme_colors() -> tuple[str, str]:
+            fg: str = style.lookup("TkLineNumbers", "foreground", default="black")
+            bg: str = style.lookup("TkLineNumbers", "background", default="white")
+            return (fg, bg)
 
-    text.bind("<<Modified>>", lambda _: linenums.redraw())
-    text.config(font=("Courier New bold", 15))
+        linenums = TkLineNumbers(root, text, colors=ttk_theme_colors, tilde="~")
+        linenums.pack(fill="y", side="left", expand=True)
 
-    root.mainloop()
+        text.bind("<KeyRelease>", lambda _: text.after_idle(linenums.redraw))
+
+        # tkinter sends font as str
+        #text.config(font=Font(root, family="Consolas", size=20))
+        text.config(font="Consolas 20")
+        text.config(font="Courier 20")
+
+        root.mainloop()
+    
+    else:        
+        import customtkinter as ctk
+        import tkinter as tk
+        from tkinter.font import Font
+
+        root = ctk.CTk()
+
+        textbox = ctk.CTkTextbox(root)
+        textbox.grid(row=0, column=1, sticky="nsew")
+
+        # customtkinter sends font type as CtkFont() instance or tuple
+
+        # both are accepted in customtkinter
+        _font = ctk.CTkFont("Consolas", 20)
+        # _font = ("Consolas", 20)
+        
+        # both are not accepted in customtkinter
+        # _font = Font(family="Consolas", size=20)
+        # _font = "Consolas 20"
+
+        textbox.configure(font=_font)
+
+        linecounter = TkLineNumbers(root, textbox, justify="left", colors=("#e3ba68", "#1D1E1E"),tilde="~", bd=0)
+        linecounter.grid(row=0, column=0, pady=(7,0), sticky="nsew")
+
+        root.bind("<KeyRelease>", lambda _: textbox.after_idle(linecounter.redraw))
+
+        root.mainloop()
