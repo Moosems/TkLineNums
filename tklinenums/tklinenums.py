@@ -127,12 +127,23 @@ class TkLineNumbers(Canvas):
 
         # If tkinter default font is in use
         if widget_font == "TkFixedFont":
-            _font = CTkFont(family="TkFixedFont", size=11)
+            # size 13 is hardcoded. It should be the current font size of TkFixedFont, but I could not
+            # find a way to get it, so 13 is working fine here. This is probably problematic.
+            _font = CTkFont(family="TkFixedFont", size=13)
 
         # If user is using tkinter
         elif type(widget_font) == str:
-            cur_font = widget_font.split(" ")
-            _font = Font(family=cur_font[0], size=cur_font[1])
+            
+            # If font family has 2+ words
+            if "}" in widget_font:
+                _family = widget_font.split("}")[0].replace("{", "")
+                _size = widget_font.split("}")[1]
+                _font = Font(family=_family, size=_size)
+            
+
+            else:
+                cur_font = widget_font.split(" ")
+                _font = Font(family=cur_font[0], size=cur_font[1])
 
         # If user is using customtkinter        
         # In customtkinter, fonts only accept tuples and CTkFont instance
@@ -427,8 +438,8 @@ if __name__ == "__main__":
 
         # tkinter sends font as str
         #text.config(font=Font(root, family="Consolas", size=20))
-        text.config(font="Consolas 20")
-        text.config(font="Courier 20")
+        #text.config(font="Consolas 20")
+        #text.config(font=("Courier New", 20))
 
         root.mainloop()
     
