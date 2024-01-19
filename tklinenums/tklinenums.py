@@ -162,7 +162,7 @@ class TkLineNumbers(Canvas):
             if int(last_line) < max_lines:
             # If user send a tilde parameter, the loop range will change to the max visible lines in widget
             # Else, loop range will be last_line + 1 (default)
-                _range = last_line + max_lines + 1 if self.tilde is not None else last_line + 1
+                _range = last_line + max_lines + 1 - int(self.textwidget.index("insert").split(".")[0]) if self.tilde is not None else last_line + 1
         
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, _range):
@@ -455,8 +455,8 @@ if __name__ == "__main__":
         # customtkinter sends font type as CtkFont() instance or tuple
 
         # both are accepted in customtkinter
-        #_font = ctk.CTkFont("Consolas", 20)
-        _font = ("Consolas", 20)
+        _font = ctk.CTkFont("Consolas", 20)
+        #_font = ("Consolas", 20)
         
         # both are not accepted in customtkinter
         # _font = Font(family="Consolas", size=20)
