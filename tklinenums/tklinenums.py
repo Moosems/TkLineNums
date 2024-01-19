@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from platform import system
 from tkinter import Canvas, Event, Misc, Text, getboolean
+from tkinter.font import Font
 from typing import Callable, Optional
 
 from customtkinter import CTkFont
