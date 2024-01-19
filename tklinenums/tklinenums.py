@@ -6,8 +6,6 @@ from tkinter import Canvas, Event, Misc, Text, getboolean
 from tkinter.font import Font
 from typing import Callable, Optional
 
-from customtkinter import CTkFont
-
 
 SYSTEM = system()
 
@@ -131,7 +129,7 @@ class TkLineNumbers(Canvas):
             if widget_font == "TkFixedFont":
                 # size 13 is hardcoded. It should be the current font size of TkFixedFont, but I could not
                 # find a way to get it, so 13 is working fine here. This is probably problematic.
-                _font = CTkFont(family="TkFixedFont", size=13)
+                _font = Font(family="TkFixedFont", size=13)
 
             # If user is using tkinter
             elif type(widget_font) == str:
@@ -152,9 +150,12 @@ class TkLineNumbers(Canvas):
                     _font = Font(family=cur_font[0], size=cur_font[1])
 
             # If user is using customtkinter        
-            # In customtkinter, fonts only accept tuples and CTkFont instance
-            else: _font = CTkFont(family=widget_font[0], size=widget_font[1]) if type(widget_font) == tuple else widget_font
-        
+            # In customtkinter, fonts only accept tuple and CTkFont instance
+            elif type(widget_font) == tuple:
+                raise TypeError(f"Tuple fonts type does not work correctly with the tilde parameter. Use a CTkFont() instance instead.")
+                
+            else: _font = widget_font
+            
             # Get the max amount of lines that can fit in the textwidget
             max_lines = self.textwidget.winfo_height() // _font.metrics()["linespace"]
 
@@ -454,8 +455,9 @@ if __name__ == "__main__":
 
         # customtkinter sends font type as CtkFont() instance or tuple
 
-        # both are accepted in customtkinter
+        # both _font are accepted in customtkinter
         _font = ctk.CTkFont("Consolas", 20)
+        # using a tuple type font will break tilde system
         #_font = ("Consolas", 20)
         
         # both are not accepted in customtkinter
