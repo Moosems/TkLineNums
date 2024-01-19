@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from platform import system
 from tkinter import Canvas, Event, Misc, Text, getboolean
-from tkinter.font import Font
+from tkinter.font import Font, nametofont
 from typing import Callable, Optional
 
 from customtkinter import CTkFont
@@ -134,24 +134,24 @@ class TkLineNumbers(Canvas):
         # If user is using tkinter
         elif type(widget_font) == str:
             
+            # If user sent a tkinter Font instance
+            if "font" in widget_font:
+                _font = Font(font=widget_font)
+
             # If font family has 2+ words
-            if "}" in widget_font:
+            elif "}" in widget_font:
                 _family = widget_font.split("}")[0].replace("{", "")
                 _size = widget_font.split("}")[1]
                 _font = Font(family=_family, size=_size)
             
-
+            # If font family is just one word ("Consolas 20")
             else:
                 cur_font = widget_font.split(" ")
                 _font = Font(family=cur_font[0], size=cur_font[1])
 
         # If user is using customtkinter        
         # In customtkinter, fonts only accept tuples and CTkFont instance
-        elif type(widget_font) == tuple:
-            _font = CTkFont(family=widget_font[0], size=widget_font[1])
-        
-        else:
-            _font = widget_font
+        else: _font = CTkFont(family=widget_font[0], size=widget_font[1]) if type(widget_font) == tuple else widget_font
         
             
         # Only calculate max_lines if user send a tilde char, for optimization reasons
@@ -209,6 +209,7 @@ class TkLineNumbers(Canvas):
                         font=self.textwidget.cget("font"),
                         fill=self.foreground_color,
                     )
+                    
                 continue
             # Create the line number
             self.create_text(
@@ -409,7 +410,7 @@ class TkLineNumbers(Canvas):
 
 
 if __name__ == "__main__":
-    option = "tk"
+    option = "ctk"
 
     if option == "tk":
         from tkinter import Tk
@@ -437,9 +438,10 @@ if __name__ == "__main__":
         text.bind("<KeyRelease>", lambda _: text.after_idle(linenums.redraw))
 
         # tkinter sends font as str
+        # all these examples below must work correctly:
         #text.config(font=Font(root, family="Consolas", size=20))
         #text.config(font="Consolas 20")
-        #text.config(font=("Courier New", 20))
+        text.config(font=("Courier New", 20))
 
         root.mainloop()
     
@@ -456,13 +458,14 @@ if __name__ == "__main__":
         # customtkinter sends font type as CtkFont() instance or tuple
 
         # both are accepted in customtkinter
-        _font = ctk.CTkFont("Consolas", 20)
-        # _font = ("Consolas", 20)
+        #_font = ctk.CTkFont("Consolas", 20)
+        _font = ("Consolas", 20)
         
         # both are not accepted in customtkinter
         # _font = Font(family="Consolas", size=20)
         # _font = "Consolas 20"
 
+        # comment _font and the line below to test the default ctk font
         textbox.configure(font=_font)
 
         linecounter = TkLineNumbers(root, textbox, justify="left", colors=("#e3ba68", "#1D1E1E"),tilde="~", bd=0)
