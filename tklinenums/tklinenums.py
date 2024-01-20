@@ -163,16 +163,21 @@ class TkLineNumbers(Canvas):
             # Saving all wrapped lines occurrences
             wrapped_lines = 0
 
+            # Check if textwidget has the count method (CTkTextbox does not have it)
+            has_count_method = hasattr(self.textwidget, "count") and callable(getattr(self.textwidget, "count"))
+
+
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, first_loop_range):
             # If user is using tilde chars, it is necessary to know how many wrapped lines
             if self.tilde:
-                try:
+                # If user is using tkinter Text class
+                if has_count_method:
                     is_wrapped = self.textwidget.count(
                         f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
                     )
                 # If user is using customtkinter and textwidget is a CTkTextbox instance
-                except AttributeError:
+                else:
                     is_wrapped = self.textwidget._textbox.count(
                         f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
                     )
@@ -420,7 +425,7 @@ class TkLineNumbers(Canvas):
 
 
 if __name__ == "__main__":
-    option = "tk"
+    option = "ctk"
 
     if option == "tk":
         from tkinter import Tk
