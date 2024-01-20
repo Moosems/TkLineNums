@@ -164,8 +164,9 @@ class TkLineNumbers(Canvas):
             wrapped_lines = 0
 
             # Check if textwidget has the count method (CTkTextbox does not have it)
-            has_count_method = hasattr(self.textwidget, "count") and callable(getattr(self.textwidget, "count"))
-
+            has_count_method = hasattr(self.textwidget, "count") and callable(
+                getattr(self.textwidget, "count")
+            )
 
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, first_loop_range):
