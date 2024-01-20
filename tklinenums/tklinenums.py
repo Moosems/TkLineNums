@@ -159,24 +159,14 @@ class TkLineNumbers(Canvas):
             # Get the max amount of lines that can fit in the textwidget
             max_lines = self.textwidget.winfo_height() // _font.metrics()["linespace"]
 
-            # if the last line is greater than max_visible_lines, you won't need a tilde char
-            if int(last_line) < max_lines:
-            # If user send a tilde parameter, the loop range will change to the max visible lines in widget
-            # Else, loop range will be last_line + 1 (default)
-                _range = last_line + max_lines + 1 - int(self.textwidget.index("insert").split(".")[0]) if self.tilde is not None else last_line + 1
         
-        skip = []
-
+        wrapped_lines = 0
+        # Draw the line numbers looping through the lines
         for lineno in range(first_line, _range):
             is_wrapped = self.textwidget.count(f"{lineno}.0", f"{lineno}.0 lineend", "displaylines")
             if is_wrapped:
-                skip.append((lineno, lineno + is_wrapped[0]))
+                wrapped_lines += is_wrapped[0]
 
-        #print(skip)
-        
-
-        # Draw the line numbers looping through the lines
-        for lineno in range(first_line, _range):
 
             # Check if line is elided
             tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
@@ -208,15 +198,8 @@ class TkLineNumbers(Canvas):
                 )
             
             elif self.tilde:
-                skip_loop = False
-                for i in skip:
-                    if i[1] >= lineno > i[0]:
-                        skip_loop = True
-
-                if skip_loop: continue
                 # Only create tilde char if the current line is less than max_lines
                 if lineno <= max_lines:
-                    print("criando tilde em ",lineno)
                 # Creates the tilde character
                     self.create_text(
                         0
@@ -231,6 +214,26 @@ class TkLineNumbers(Canvas):
                         fill=self.foreground_color,
                     )
                 continue
+        
+        _range2 = last_line + max_lines + 1 - int(self.textwidget.index("insert").split(".")[0])
+        for lineno in range(_range + wrapped_lines, _range2):
+            print(_range, _range2)
+            # Only create tilde char if the current line is less than max_lines
+            if lineno <= max_lines:
+            # Creates the tilde character
+                self.create_text(
+                    0
+                    if self.justify == "left"
+                    else int(self["width"])
+                    if self.justify == "right"
+                    else int(self["width"]) / 2,
+                    (lineno - 1) * _font.metrics()["linespace"],
+                    text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
+                    anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
+                    font=self.textwidget.cget("font"),
+                    fill=self.foreground_color,
+                )
+
 
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
