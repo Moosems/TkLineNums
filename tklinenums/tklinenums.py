@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 from platform import system
-from tkinter import Canvas, Event, Misc, Text, getboolean
+from tkinter import Canvas, Event, Misc, Text  # , getboolean
 from tkinter.font import Font
 from typing import Callable, Optional
-
 
 SYSTEM = system()
 
@@ -48,7 +47,7 @@ class TkLineNumbers(Canvas):
         # None means take colors from text widget (default).
         # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
         colors: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
-        tilde: str | None = "~",
+        tilde: str | None = None,
         *args,
         **kwargs,
     ) -> None:
@@ -117,23 +116,22 @@ class TkLineNumbers(Canvas):
         last_line = int(
             self.textwidget.index(f"@0,{self.textwidget.winfo_height()}").split(".")[0]
         )
-        
+
         # Set the default loop range
-        _range = last_line + 1
-            
+        first_loop_range = last_line + 1
+
         # Only calculate max_lines and widget_font if user send a tilde char, for optimization reasons
         if self.tilde:
             widget_font = self.textwidget.cget("font")
 
             # If tkinter default font is in use
             if widget_font == "TkFixedFont":
-                # size 13 is hardcoded. It should be the current font size of TkFixedFont, but I could not
-                # find a way to get it, so 13 is working fine here. This is probably problematic.
-                _font = Font(family="TkFixedFont", size=13)
+                # size 10 is hardcoded. It should be the current font size of TkFixedFont, but I could not
+                # find a way to get it, so 10 is working fine here. This is probably problematic.
+                _font = Font(family="Arial", size=10)
 
             # If user is using tkinter
-            elif type(widget_font) == str:
-                
+            elif isinstance(widget_font, str):
                 # If user sent a tkinter Font instance
                 if "font" in widget_font:
                     _font = Font(font=widget_font)
@@ -143,47 +141,51 @@ class TkLineNumbers(Canvas):
                     _family = widget_font.split("}")[0].replace("{", "")
                     _size = widget_font.split("}")[1]
                     _font = Font(family=_family, size=_size)
-                
+
                 # If font family is just one word ("Consolas 20")
                 else:
                     cur_font = widget_font.split(" ")
                     _font = Font(family=cur_font[0], size=cur_font[1])
 
-            # If user is using customtkinter        
+            # If user is using customtkinter
             # In customtkinter, fonts only accept tuple and CTkFont instance
             elif type(widget_font) == tuple:
-                raise TypeError(f"Tuple fonts type does not work correctly with the tilde parameter. Use a CTkFont() instance instead.")
-                
-            else: _font = widget_font
-            
+                raise TypeError(
+                    "Tuple fonts type does not work correctly with the tilde parameter. Use a CTkFont() instance instead."
+                )
+
+            else:
+                _font = widget_font
+
             # Get the max amount of lines that can fit in the textwidget
             max_lines = self.textwidget.winfo_height() // _font.metrics()["linespace"]
 
-        
-        wrapped_lines = 0
+            # Saving all wrapped lines occurrences
+            wrapped_lines = 0
+
         # Draw the line numbers looping through the lines
-        for lineno in range(first_line, _range):
-            is_wrapped = self.textwidget.count(f"{lineno}.0", f"{lineno}.0 lineend", "displaylines")
+        for lineno in range(first_line, first_loop_range):
+            is_wrapped = self.textwidget.count(
+                f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
+            )
             if is_wrapped:
                 wrapped_lines += is_wrapped[0]
 
-
             # Check if line is elided
-            tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
-            elide_values: tuple[str] = (
-                self.textwidget.tag_cget(tag, "elide") for tag in tags
-            )
+            # tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
+            # elide_values: tuple[str] = (
+            #     self.textwidget.tag_cget(tag, "elide") for tag in tags
+            # )
             # elide values can be empty
-            line_elided: bool = any(getboolean(v or "false") for v in elide_values)
+            # line_elided: bool = any(getboolean(v or "false") for v in elide_values)
 
             # If the line is not visible, skip it
             dlineinfo: tuple[
                 int, int, int, int, int
             ] | None = self.textwidget.dlineinfo(f"{lineno}.0")
 
-                    
             if dlineinfo:
-            # Create the line number
+                # Create the line number
                 self.create_text(
                     0
                     if self.justify == "left"
@@ -196,11 +198,19 @@ class TkLineNumbers(Canvas):
                     font=self.textwidget.cget("font"),
                     fill=self.foreground_color,
                 )
-            
-            elif self.tilde:
+
+        # The second_loop_range will be the last visible line in textwidget
+        second_loop_range = (last_line + max_lines + 1) - int(
+            self.textwidget.index("insert").split(".")[0]
+        )
+
+        # After drawing the numbers, iterate from the last content line to the last visible line, to add tilde chars
+        # the wrapped_lines are added in first_loop_range to ignore all visible wrapped lines
+        if self.tilde:
+            for lineno in range(first_loop_range + wrapped_lines, second_loop_range):
                 # Only create tilde char if the current line is less than max_lines
                 if lineno <= max_lines:
-                # Creates the tilde character
+                    # Creates the tilde character
                     self.create_text(
                         0
                         if self.justify == "left"
@@ -208,32 +218,15 @@ class TkLineNumbers(Canvas):
                         if self.justify == "right"
                         else int(self["width"]) / 2,
                         (lineno - 1) * _font.metrics()["linespace"],
-                        text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
-                        anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
+                        text=f" {self.tilde} "
+                        if self.justify != "center"
+                        else f"{self.tilde}",
+                        anchor={"left": "nw", "right": "ne", "center": "n"}[
+                            self.justify
+                        ],
                         font=self.textwidget.cget("font"),
                         fill=self.foreground_color,
                     )
-                continue
-        
-        _range2 = last_line + max_lines + 1 - int(self.textwidget.index("insert").split(".")[0])
-        for lineno in range(_range + wrapped_lines, _range2):
-            print(_range, _range2)
-            # Only create tilde char if the current line is less than max_lines
-            if lineno <= max_lines:
-            # Creates the tilde character
-                self.create_text(
-                    0
-                    if self.justify == "left"
-                    else int(self["width"])
-                    if self.justify == "right"
-                    else int(self["width"]) / 2,
-                    (lineno - 1) * _font.metrics()["linespace"],
-                    text=f" {self.tilde} " if self.justify != "center" else f"{self.tilde}",
-                    anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
-                    font=self.textwidget.cget("font"),
-                    fill=self.foreground_color,
-                )
-
 
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
@@ -449,15 +442,16 @@ if __name__ == "__main__":
 
         # tkinter sends font as str
         # all these examples below must work correctly:
-        #text.config(font=Font(root, family="Consolas", size=20))
-        #text.config(font="Consolas 20")
-        text.config(font=("Courier New", 20))
+        text.config(font=Font(root, family="Consolas", size=20))
+        # text.config(font="Consolas 20")
+        # text.config(font=("Courier New", 20))
 
         root.mainloop()
-    
-    else:        
-        import customtkinter as ctk
+
+    else:
         from tkinter.font import Font
+
+        import customtkinter as ctk
 
         root = ctk.CTk()
 
@@ -469,8 +463,8 @@ if __name__ == "__main__":
         # both _font are accepted in customtkinter
         _font = ctk.CTkFont("Consolas", 20)
         # using a tuple type font will break tilde system
-        #_font = ("Consolas", 20)
-        
+        # _font = ("Consolas", 20)
+
         # both are not accepted in customtkinter
         # _font = Font(family="Consolas", size=20)
         # _font = "Consolas 20"
@@ -478,8 +472,15 @@ if __name__ == "__main__":
         # comment _font and the line below to test the default ctk font
         textbox.configure(font=_font)
 
-        linecounter = TkLineNumbers(root, textbox, justify="left", colors=("#e3ba68", "#1D1E1E"),tilde="~", bd=0)
-        linecounter.grid(row=0, column=0, pady=(7,0), sticky="nsew")
+        linecounter = TkLineNumbers(
+            root,
+            textbox,
+            justify="left",
+            colors=("#e3ba68", "#1D1E1E"),
+            tilde="~",
+            bd=0,
+        )
+        linecounter.grid(row=0, column=0, pady=(7, 0), sticky="nsew")
 
         root.bind("<Key>", lambda _: textbox.after_idle(linecounter.redraw))
 
