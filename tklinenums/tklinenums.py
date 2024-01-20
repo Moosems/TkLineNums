@@ -165,11 +165,13 @@ class TkLineNumbers(Canvas):
 
         # Draw the line numbers looping through the lines
         for lineno in range(first_line, first_loop_range):
-            is_wrapped = self.textwidget.count(
-                f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
-            )
-            if is_wrapped:
-                wrapped_lines += is_wrapped[0]
+            # If user is using tilde chars, it is necessary to know how many wrapped lines
+            if self.tilde:
+                is_wrapped = self.textwidget.count(
+                    f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
+                )
+                if is_wrapped:
+                    wrapped_lines += is_wrapped[0]
 
             # Check if line is elided
             # tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
@@ -199,34 +201,32 @@ class TkLineNumbers(Canvas):
                     fill=self.foreground_color,
                 )
 
-        # The second_loop_range will be the last visible line in textwidget
-        second_loop_range = (last_line + max_lines + 1) - int(
-            self.textwidget.index("insert").split(".")[0]
-        )
+        # The second loop is only necessary if user is using a tilde char
+        # Only create tilde char if the max_lines (max visible lines) is greater than last_line + wrapped_line_amount
+        if self.tilde and max_lines > last_line + wrapped_lines:
+            # The second_loop_range will be the last visible line in textwidget
+            second_loop_range = (last_line + max_lines + 1) - int(
+                self.textwidget.index("insert").split(".")[0]
+            )
 
-        # After drawing the numbers, iterate from the last content line to the last visible line, to add tilde chars
-        # the wrapped_lines are added in first_loop_range to ignore all visible wrapped lines
-        if self.tilde:
+            # After drawing the numbers, iterate from the last content line to the last visible line, to add tilde chars
+            # the wrapped_lines are added in first_loop_range to ignore all visible wrapped lines
             for lineno in range(first_loop_range + wrapped_lines, second_loop_range):
-                # Only create tilde char if the current line is less than max_lines
-                if lineno <= max_lines:
-                    # Creates the tilde character
-                    self.create_text(
-                        0
-                        if self.justify == "left"
-                        else int(self["width"])
-                        if self.justify == "right"
-                        else int(self["width"]) / 2,
-                        (lineno - 1) * _font.metrics()["linespace"],
-                        text=f" {self.tilde} "
-                        if self.justify != "center"
-                        else f"{self.tilde}",
-                        anchor={"left": "nw", "right": "ne", "center": "n"}[
-                            self.justify
-                        ],
-                        font=self.textwidget.cget("font"),
-                        fill=self.foreground_color,
-                    )
+                # Creates the tilde character
+                self.create_text(
+                    0
+                    if self.justify == "left"
+                    else int(self["width"])
+                    if self.justify == "right"
+                    else int(self["width"]) / 2,
+                    (lineno - 1) * _font.metrics()["linespace"],
+                    text=f" {self.tilde} "
+                    if self.justify != "center"
+                    else f"{self.tilde}",
+                    anchor={"left": "nw", "right": "ne", "center": "n"}[self.justify],
+                    font=self.textwidget.cget("font"),
+                    fill=self.foreground_color,
+                )
 
     def mouse_scroll(self, event: Event) -> None:
         """Scrolls the text widget when the mouse wheel is scrolled -- Internal use only"""
