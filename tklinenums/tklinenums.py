@@ -167,9 +167,16 @@ class TkLineNumbers(Canvas):
         for lineno in range(first_line, first_loop_range):
             # If user is using tilde chars, it is necessary to know how many wrapped lines
             if self.tilde:
-                is_wrapped = self.textwidget.count(
-                    f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
-                )
+                try:
+                    is_wrapped = self.textwidget.count(
+                        f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
+                    )
+                # If user is using customtkinter and textwidget is a CTkTextbox instance
+                except AttributeError:
+                    is_wrapped = self.textwidget._textbox.count(
+                        f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
+                    )
+
                 if is_wrapped:
                     wrapped_lines += is_wrapped[0]
 
