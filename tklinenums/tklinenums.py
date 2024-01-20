@@ -128,7 +128,7 @@ class TkLineNumbers(Canvas):
             if widget_font == "TkFixedFont":
                 # size 10 is hardcoded. It should be the current font size of TkFixedFont, but I could not
                 # find a way to get it, so 10 is working fine here. This is probably problematic.
-                _font = Font(family="Arial", size=10)
+                _font = Font(family="TkFixedFont", size=10)
 
             # If user is using tkinter
             elif isinstance(widget_font, str):
