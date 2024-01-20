@@ -48,7 +48,7 @@ class TkLineNumbers(Canvas):
         # None means take colors from text widget (default).
         # Otherwise it is a function that takes no arguments and returns (fg, bg) tuple.
         colors: Callable[[], tuple[str, str]] | tuple[str, str] | None = None,
-        tilde: str | None = None,
+        tilde: str | None = "~",
         *args,
         **kwargs,
     ) -> None:
