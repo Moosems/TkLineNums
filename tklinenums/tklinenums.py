@@ -149,7 +149,7 @@ class TkLineNumbers(Canvas):
 
             # If user is using customtkinter
             # In customtkinter, fonts only accept tuple and CTkFont instance
-            elif type(widget_font) == tuple:
+            elif isinstance(widget_font, tuple):
                 raise TypeError(
                     "Tuple fonts type does not work correctly with the tilde parameter. Use a CTkFont() instance instead."
                 )
