@@ -218,9 +218,7 @@ class TkLineNumbers(Canvas):
         # Only create tilde char if the max_lines (max visible lines) is greater than last_line + wrapped_line_amount
         if self.tilde and max_lines > last_line + wrapped_lines:
             # The second_loop_range will be the last visible line in textwidget
-            second_loop_range = (last_line + max_lines + 1) - int(
-                self.textwidget.index("insert").split(".")[0]
-            )
+            second_loop_range = (last_line + max_lines + 2) - first_loop_range
 
             # After drawing the numbers, iterate from the last content line to the last visible line, to add tilde chars
             # the wrapped_lines are added in first_loop_range to ignore all visible wrapped lines
