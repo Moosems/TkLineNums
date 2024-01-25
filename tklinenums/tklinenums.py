@@ -128,24 +128,24 @@ class TkLineNumbers(Canvas):
             if widget_font == "TkFixedFont":
                 # size 10 is hardcoded. It should be the current font size of TkFixedFont, but I could not
                 # find a way to get it, so 10 is working fine here. This is probably problematic.
-                _font = Font(family="TkFixedFont", size=10)
+                used_font = Font(family="TkFixedFont", size=10)
 
             # If user is using tkinter
             elif isinstance(widget_font, str):
                 # If user sent a tkinter Font instance
                 if "font" in widget_font:
-                    _font = Font(font=widget_font)
+                    used_font = Font(font=widget_font)
 
                 # If font family has 2+ words
                 elif "}" in widget_font:
-                    _family = widget_font.split("}")[0].replace("{", "")
-                    _size = widget_font.split("}")[1]
-                    _font = Font(family=_family, size=_size)
+                    used_family = widget_font.split("}")[0].replace("{", "")
+                    used_size = widget_font.split("}")[1]
+                    used_font = Font(family=used_family, size=used_size)
 
                 # If font family is just one word ("Consolas 20")
                 else:
                     cur_font = widget_font.split(" ")
-                    _font = Font(family=cur_font[0], size=cur_font[1])
+                    used_font = Font(family=cur_font[0], size=cur_font[1])
 
             # If user is using customtkinter
             # In customtkinter, fonts only accept tuple and CTkFont instance
@@ -155,10 +155,10 @@ class TkLineNumbers(Canvas):
                 )
 
             else:
-                _font = widget_font
+                used_font = widget_font
 
             # Get the max amount of lines that can fit in the textwidget
-            max_lines = self.textwidget.winfo_height() // _font.metrics()["linespace"]
+            max_lines = self.textwidget.winfo_height() // used_font.metrics()["linespace"]
 
             # Saving all wrapped lines occurrences
             wrapped_lines = 0
@@ -230,7 +230,7 @@ class TkLineNumbers(Canvas):
                     else int(self["width"])
                     if self.justify == "right"
                     else int(self["width"]) / 2,
-                    (lineno - 1) * _font.metrics()["linespace"],
+                    (lineno - 1) * used_font.metrics()["linespace"],
                     text=f" {self.tilde} "
                     if self.justify != "center"
                     else f"{self.tilde}",
@@ -424,7 +424,7 @@ class TkLineNumbers(Canvas):
 
 
 if __name__ == "__main__":
-    option = "ctk"
+    option = "tk"
 
     if option == "tk":
         from tkinter import Tk
