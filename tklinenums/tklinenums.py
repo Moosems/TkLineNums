@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from platform import system
-from tkinter import Canvas, Event, Misc, Text  # , getboolean
+from tkinter import Canvas, Event, Misc, Text, getboolean
 from tkinter.font import Font
 from typing import Callable, Optional
 
@@ -182,17 +182,17 @@ class TkLineNumbers(Canvas):
                     is_wrapped = self.textwidget._textbox.count(
                         f"{lineno}.0", f"{lineno}.0 lineend", "displaylines"
                     )
-
+                # If the line is wrapped, add to wrapped_lines the number of visible lines that it is occupying
                 if is_wrapped:
                     wrapped_lines += is_wrapped[0]
 
             # Check if line is elided
-            # tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
-            # elide_values: tuple[str] = (
-            #     self.textwidget.tag_cget(tag, "elide") for tag in tags
-            # )
+            tags: tuple[str] = self.textwidget.tag_names(f"{lineno}.0")
+            elide_values: tuple[str] = (
+                self.textwidget.tag_cget(tag, "elide") for tag in tags
+            )
             # elide values can be empty
-            # line_elided: bool = any(getboolean(v or "false") for v in elide_values)
+            line_elided: bool = any(getboolean(v or "false") for v in elide_values)
 
             # If the line is not visible, skip it
             dlineinfo: tuple[
